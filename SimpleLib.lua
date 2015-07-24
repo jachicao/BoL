@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 0.80
+_G.SimpleLibVersion = 0.81
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -287,7 +287,7 @@ end
 
 function FindItemSlot(name)
     for slot = ITEM_1, ITEM_7 do
-        if myHero:CanUseSpell(slot) == READY and myHero:GetSpellData(slot) and myHero:GetSpellData(slot).name and myHero:GetSpellData(slot).name:lower():find(name:lower()) then
+        if myHero:CanUseSpell(slot) == READY and myHero:GetSpellData(slot) ~= nil and myHero:GetSpellData(slot).name ~= nil and myHero:GetSpellData(slot).name:lower():find(name:lower()) then
             return slot
         end
     end
@@ -296,7 +296,7 @@ end
 
 function FindSummonerSlot(name)
     for slot = SUMMONER_1,SUMMONER_2 do
-        if myHero:GetSpellData(slot) and myHero:GetSpellData(slot).name and myHero:GetSpellData(slot).name:lower():find(name:lower()) then
+        if myHero:GetSpellData(slot)  ~= nil and myHero:GetSpellData(slot).name  ~= nil and myHero:GetSpellData(slot).name:lower():find(name:lower()) then
             return slot
         end
     end
@@ -835,10 +835,10 @@ function _Spell:SetAccuracy(int)
 end
 
 function _Spell:YasuoWall(vector)
-    if YasuoWall ~= nil and self:IsReady() and self.Speed ~= math.huge and vector ~= nil then
+    if YasuoWall ~= nil and self.Speed ~= math.huge and vector ~= nil then
         for i, enemy in ipairs(GetEnemyHeroes()) do
             if enemy.charName == "Yasuo" then
-                local level = enemy:GetSpellData(_W) and enemy:GetSpellData(_W).level ~= nil and enemy:GetSpellData(_W).level or 0
+                local level = enemy:GetSpellData(_W) ~= nil and enemy:GetSpellData(_W).level ~= nil and enemy:GetSpellData(_W).level or 0
                 local width = 250 + level * 50
                 local pos1 = Vector(YasuoWall.Object) + Vector(Vector(YasuoWall.Object) - Vector(YasuoWall.StartVector)):normalized():perpendicular() * width/2
                 local pos2 = Vector(YasuoWall.Object) + Vector(Vector(YasuoWall.Object) - Vector(YasuoWall.StartVector)):normalized():perpendicular2() * width/2
@@ -855,6 +855,7 @@ end
 
 function _Spell:CastToVector(vector)
     if self:IsReady() and vector ~= nil and not IsEvading() then
+        if self:YasuoWall(vector) then return end
         if VIP_USER then
             Packet("S_CAST", {spellId = self.Slot, toX = vector.x, toY = vector.z, fromX = vector.x, fromY = vector.z}):send()
         else
@@ -872,7 +873,6 @@ function _Spell:Cast(target, t)
             end
             if self:IsSkillShot() then
                 local CastPosition, WillHit = self:GetPrediction(target, t)
-                if self:YasuoWall(CastPosition) then return end
                 if CastPosition ~= nil and WillHit then
                     self:CastToVector(CastPosition)
                 end
@@ -1093,7 +1093,7 @@ function _Spell:Damage(target, stage)
         if self.DamageName == "SMITE" then
             if IsValidTarget(target) then
                 if target.type == myHero.type then
-                    local name = self:GetSpellData() and self:GetSpellData().name ~= nil and self:GetSpellData().name or ""
+                    local name = self:GetSpellData() ~= nil and self:GetSpellData().name ~= nil and self:GetSpellData().name or ""
                     if name:lower():find("smiteduel") then
                         return getDmg("SMITESS", target, myHero, stage)
                     elseif name:lower():find("smiteplayerganker") then
@@ -1111,7 +1111,7 @@ function _Spell:Damage(target, stage)
 end
 
 function _Spell:Mana()
-    return self.Slot ~= nil and myHero:GetSpellData(self.Slot) and myHero:GetSpellData(self.Slot).mana ~= nil and myHero:GetSpellData(self.Slot).mana or 0
+    return self.Slot ~= nil and myHero:GetSpellData(self.Slot) ~= nil and myHero:GetSpellData(self.Slot).mana ~= nil and myHero:GetSpellData(self.Slot).mana or 0
 end
 
 function _Spell:GetAccuracy()
@@ -1932,10 +1932,6 @@ function _OrbwalkManager:Evade()
 end
 
 function _OrbwalkManager:MyRange(target)
-    local int1 = 50
-    if IsValidTarget(target) then 
-        int1 = GetDistance(target.minBBox, target)/2 
-    end
     return myHero.range + myHero.boundingRadius + int1
 end
 
