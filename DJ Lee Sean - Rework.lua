@@ -1,1 +1,1 @@
-print("bye bye BoL")
+print("Hello, I'm icreative, I left Bot of Legends")
