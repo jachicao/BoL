@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 0.82
+_G.SimpleLibVersion = 0.84
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -703,14 +703,16 @@ function _Spell:__init(tab)
         self.Slot = tab.Slot
         self.IsForEnemies = true
         if tab.IsForEnemies ~= nil and type(tab.IsForEnemies) == "boolean" then self.IsForEnemies = tab.IsForEnemies end
+        self.DamageName = nil
         if tab.DamageName ~= nil then
+            self.DamageName = tab.DamageName
             self.Name = tab.DamageName
         elseif self.Slot ~= nil then
+            self.DamageName = SlotToString(self.Slot)
             self.Name = SlotToString(self.Slot)
         else
             self.Name = "Spell"..tostring(#SpellManager.spells + 1)
         end
-        self.DamageName = tab.DamageName ~= nil and tab.DamageName or self.Name
         assert(tab.Range and type(tab.Range) == "number", "_Spell: Range is invalid!")
         self.Range = tab.Range
         self.Width = tab.Width ~= nil and tab.Width or 1
@@ -1932,8 +1934,8 @@ function _OrbwalkManager:Evade()
 end
 
 function _OrbwalkManager:MyRange(target)
-local int1 = 50
-if IsValidTarget(target) then int1 = target.boundingRadius end
+    local int1 = 0
+    if IsValidTarget(target) then int1 = target.boundingRadius end
     return myHero.range + myHero.boundingRadius + int1
 end
 
