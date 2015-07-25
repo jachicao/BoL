@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 0.81
+_G.SimpleLibVersion = 0.82
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1932,6 +1932,8 @@ function _OrbwalkManager:Evade()
 end
 
 function _OrbwalkManager:MyRange(target)
+local int1 = 50
+if IsValidTarget(target) then int1 = target.boundingRadius end
     return myHero.range + myHero.boundingRadius + int1
 end
 
