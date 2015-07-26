@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 0.84
+_G.SimpleLibVersion = 0.85
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1141,53 +1141,55 @@ function _Spell:LaneClear(tab)
         local NumberOfHits = tab ~= nil and tab.NumberOfHits ~= nil and type(tab.NumberOfHits) == "number" and tab.NumberOfHits or 1
         local UseCast = true
         if tab ~= nil and tab.UseCast ~= nil and type(tab.UseCast) == "boolean" then UseCast = tab.UseCast end
-        if self:IsLinear() then
-            local bestMinion, hits = GetBestLineFarmPosition(self.Range, self.Width, self.EnemyMinions.objects)
-            if hits >= NumberOfHits then
-                if UseCast then
-                    self:Cast(bestMinion)
+        if NumberOfHits >= 1 then
+            if self:IsLinear() then
+                local bestMinion, hits = GetBestLineFarmPosition(self.Range, self.Width, self.EnemyMinions.objects)
+                if hits >= NumberOfHits then
+                    if UseCast then
+                        self:Cast(bestMinion)
+                    end
+                    return bestMinion
                 end
-                return bestMinion
-            end
-        elseif self:IsCircular() then
-            local bestMinion, hits = GetBestCircularFarmPosition(self.Range, self.Width, self.EnemyMinions.objects)
-            if hits >= NumberOfHits then
-                if UseCast then
-                    self:Cast(bestMinion)
+            elseif self:IsCircular() then
+                local bestMinion, hits = GetBestCircularFarmPosition(self.Range, self.Width, self.EnemyMinions.objects)
+                if hits >= NumberOfHits then
+                    if UseCast then
+                        self:Cast(bestMinion)
+                    end
+                    return bestMinion
                 end
-                return bestMinion
-            end
-        elseif self:IsCone() then
-            local bestMinion, hits = GetBestLineFarmPosition(self.Range, self.Width, self.EnemyMinions.objects)
-            if hits >= NumberOfHits then
-                if UseCast then
-                    self:Cast(bestMinion)
+            elseif self:IsCone() then
+                local bestMinion, hits = GetBestLineFarmPosition(self.Range, self.Width, self.EnemyMinions.objects)
+                if hits >= NumberOfHits then
+                    if UseCast then
+                        self:Cast(bestMinion)
+                    end
+                    return minion
                 end
-                return minion
-            end
-        elseif self:IsSelf() then
-            local objects = self:ObjectsInArea(self.EnemyMinions.objects)
-            local hits = #objects
-            if hits >= NumberOfHits then
+            elseif self:IsSelf() then
+                local objects = self:ObjectsInArea(self.EnemyMinions.objects)
+                local hits = #objects
+                if hits >= NumberOfHits then
+                    local bestMinion = nil
+                    for i, minion in pairs(objects) do
+                        bestMinion = minion
+                        break
+                    end
+                    if UseCast then
+                        self:Cast(bestMinion)
+                    end
+                    return bestMinion
+                end
+            elseif self:IsTargetted() then
                 local bestMinion = nil
-                for i, minion in pairs(objects) do
-                    bestMinion = minion
-                    break
-                end
-                if UseCast then
-                    self:Cast(bestMinion)
+                for i, minion in pairs(self.EnemyMinions.objects) do
+                    if self:IsReady() then
+                        self:Cast(minion)
+                        bestMinion = minion
+                    end
                 end
                 return bestMinion
             end
-        elseif self:IsTargetted() then
-            local bestMinion = nil
-            for i, minion in pairs(self.EnemyMinions.objects) do
-                if self:IsReady() then
-                    self:Cast(minion)
-                    bestMinion = minion
-                end
-            end
-            return bestMinion
         end
     end
     return nil
