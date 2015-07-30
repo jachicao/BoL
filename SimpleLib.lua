@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 0.88
+_G.SimpleLibVersion = 0.89
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1518,8 +1518,9 @@ function _Prediction:IsImmobile(target, sp)
         local accuracy = sp.Accuracy ~= nil and sp.Accuracy or 60
         local source = sp.Source ~= nil and sp.Source or myHero
         local ExtraDelay = speed == math.huge and 0 or (GetDistance(source, target) / speed)
-        range = range + skillshotType == SPELL_TYPE.CIRCULAR and width or 0
-        if not collision and self.UnitsImmobile[target.networkID].Duration - (os.clock() + Latency() - self.UnitsImmobile[target.networkID].Time) >= delay + ExtraDelay and GetDistanceSqr(source, target) <= math.pow(range, 2) then
+        range = range + (skillshotType == SPELL_TYPE.CIRCULAR and width or 0)
+        local ExtraDelay2 = skillshotType == SPELL_TYPE.CIRCULAR and 0 or (width / target.ms)
+        if not collision and self.UnitsImmobile[target.networkID].Duration - (os.clock() + Latency() - self.UnitsImmobile[target.networkID].Time) + ExtraDelay2 >= delay + ExtraDelay and GetDistanceSqr(source, target) <= math.pow(range , 2) then
             return true
         end
     end
@@ -1606,7 +1607,7 @@ function _Prediction:GetPrediction(target, sp)
             end
             local hitchance = self:AccuracyToHitChance(TypeOfPrediction, accuracy)
             local state, pos, perc = self.DP:predict(unit, spell, hitchance, Vector(source))
-            WillHit = (state == SkillShot.STATUS.SUCCESS_HIT and perc >= 50) or ( self:IsImmobile(target, sp) )
+            WillHit = ((state == SkillShot.STATUS.SUCCESS_HIT and perc >= 50) or self:IsImmobile(target, sp)) 
             CastPosition = pos
             Position = pos
         elseif TypeOfPrediction == "HPrediction" then
@@ -1665,7 +1666,7 @@ function _Prediction:GetPrediction(target, sp)
         end
         if WillHit then
             if type(WillHit) == "number" then
-                WillHit = WillHit >= self:AccuracyToHitChance(TypeOfPrediction, accuracy) or self:IsImmobile(target, sp)
+                WillHit = ((WillHit >= self:AccuracyToHitChance(TypeOfPrediction, accuracy)) or self:IsImmobile(target, sp))
             end
         else
             WillHit = false
@@ -1818,16 +1819,15 @@ function _OrbwalkManager:__init()
         function(obj)
             if self.AA.Object == nil and obj.name:lower() == "missile" and self:GetTime() - self.AA.LastTime + self:Latency() < 1.2 * self:WindUpTime() and obj.spellOwner and obj.spellName and obj.spellOwner.isMe and self:IsAutoAttack(obj.spellName) then
                 self:ResetMove()
-                --self.AA.Object = obj
-                --DelayAction(function() self.AA.Object = nil end, self:AnimationTime() - self:Latency() * 2)
+                self.AA.Object = obj
             end
         end
     )
 
     AddDeleteObjCallback(
         function(obj)
-            if obj and self.AA.Object ~= nil and obj.name == self.AA.Object.name and obj == self.AA.Object then
-                --self:ResetMove()
+            if obj and obj.name and self.AA.Object ~= nil and obj.name == self.AA.Object.name and obj.networkID == self.AA.Object.networkID then
+                self.AA.Object = nil
             end
         end
     )
