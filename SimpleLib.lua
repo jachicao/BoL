@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 0.86
+_G.SimpleLibVersion = 0.87
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -203,7 +203,11 @@ function IsCC(enemy, spelltype)
 end
 
 function ExtraTime()
-    return -0.07--GetLatency()/2000 - 0.1
+    return -0.07--Latency() - 0.1
+end
+
+function Latency()
+    return GetLatency()/2000 
 end
 
 function CheckUpdate()
@@ -1339,6 +1343,7 @@ end
 
 --CLASS: _Prediction
 function _Prediction:__init()
+    self.UnitsImmobile = {}
     self.PredictionList = {}
     self.Actives = {
         ["VPrediction"] = false,
@@ -1375,6 +1380,35 @@ function _Prediction:__init()
         self.Actives["SPrediction"] = true
     end
     self.LastRequest = 0
+    local ImmobileBuffs = {
+        [5] = true,
+        [11] = true,
+        [29] = true,
+        [24] = true,
+    }
+    AddApplyBuffCallback(
+        function(source, unit, buff)
+            if unit and buff and buff.type then -- and buff.duration
+                if ImmobileBuffs[buff.type] ~= nil then
+                    for i = 1, unit.buffCount do
+                        local buf = unit:getBuff(i)
+                        if buf and buf.name ~= nil and buf.endT ~= nil and buf.startT ~= nil and type(buf.name) == "string" and type(buf.endT) == "number" and type(buf.startT) == "number" and buf.name == buff.name then
+                            self.UnitsImmobile[unit.networkID] = {Time = os.clock() - Latency(), Duration = buf.endT - buf.startT}
+                        end
+                    end
+                end
+            end
+        end
+    )
+    AddRemoveBuffCallback(
+        function(unit, buff)
+            if unit and buff and buff.type then
+                if ImmobileBuffs[buff.type] ~= nil then
+                    self.UnitsImmobile[unit.networkID] = nil
+                end
+            end
+        end
+    )
 end
 
 function _Prediction:LoadPredictions()
@@ -1472,10 +1506,33 @@ function _Prediction:TimeRequest(TypeOfPrediction)
     end
 end
 
+function _Prediction:IsImmobile(target, sp)
+    if IsValidTarget(target) and self.UnitsImmobile[target.networkID] ~= nil then
+        local delay = sp.Delay ~= nil and sp.Delay or 0
+        local width = sp.Width ~= nil and sp.Width or 1
+        local range = sp.Range ~= nil and sp.Range or math.huge
+        local speed = sp.Speed ~= nil and sp.Speed or math.huge
+        local skillshotType = sp.Type ~= nil and sp.Type or SPELL_TYPE.CIRCULAR
+        local collision = sp.Collision ~= nil and sp.Collision or false
+        local aoe = sp.Aoe ~= nil and sp.Aoe or false
+        local accuracy = sp.Accuracy ~= nil and sp.Accuracy or 60
+        local source = sp.Source ~= nil and sp.Source or myHero
+        local ExtraDelay = speed == math.huge and 0 or (GetDistance(source, target) / speed)
+        range = range + skillshotType == SPELL_TYPE.CIRCULAR and width or 0
+        if self.UnitsImmobile[target.networkID].Duration - (os.clock() + Latency() - self.UnitsImmobile[target.networkID].Time) >= delay + ExtraDelay and GetDistanceSqr(source, target) <= math.pow(range, 2) then
+            return true
+        end
+    end
+    return false
+end
+
 function _Prediction:GetPrediction(target, sp)
     assert(sp and type(sp) == "table", "Prediction:GetPrediction() Table is invalid!")
     local TypeOfPrediction = sp.TypeOfPrediction ~= nil and sp.TypeOfPrediction or "VPrediction"
+    local CastPosition, WillHit, NumberOfHits, Position = nil, -1, 1, nil
     if target ~= nil and IsValidTarget(target, math.huge, target.team ~= myHero.team) and self:ValidRequest(TypeOfPrediction) then
+        CastPosition = Vector(target)
+        Position = Vector(target)
         local delay = sp.Delay ~= nil and sp.Delay or 0
         local width = sp.Width ~= nil and sp.Width or 1
         local range = sp.Range ~= nil and sp.Range or math.huge
@@ -1490,51 +1547,21 @@ function _Prediction:GetPrediction(target, sp)
             TypeOfPrediction = "VPrediction"
             if skillshotType == SPELL_TYPE.LINEAR then
                 if aoe then
-                    local castpos, hitchance, count, position = self.VP:GetLineAOECastPosition(target, delay, width, range, speed, source)
-                    if hitchance >= self:AccuracyToHitChance(TypeOfPrediction, accuracy) then
-                        return castpos, true, count, position
-                    else
-                        return castpos, false, count, position
-                    end
+                    CastPosition, WillHit, NumberOfHits, Position = self.VP:GetLineAOECastPosition(target, delay, width, range, speed, source)
                 else
-                    local castpos, hitchance, position = self.VP:GetLineCastPosition(target, delay, width, range, speed, source, collision)
-                    if hitchance >= self:AccuracyToHitChance(TypeOfPrediction, accuracy) then
-                        return castpos, true, position
-                    else
-                        return castpos, false, position
-                    end
+                    CastPosition, WillHit, Position = self.VP:GetLineCastPosition(target, delay, width, range, speed, source, collision)
                 end
             elseif skillshotType == SPELL_TYPE.CIRCULAR then
                 if aoe then
-                    local castpos, hitchance, count, position = self.VP:GetCircularAOECastPosition(target, delay, width, range, speed, source)
-                    if hitchance >= self:AccuracyToHitChance(TypeOfPrediction, accuracy) then
-                        return castpos, true, count, position
-                    else
-                        return castpos, false, count, position
-                    end
+                    CastPosition, WillHit, NumberOfHits, Position = self.VP:GetCircularAOECastPosition(target, delay, width, range, speed, source)
                 else
-                    local castpos, hitchance, position = self.VP:GetCircularCastPosition(target, delay, width, range, speed, source, collision)
-                    if hitchance >= self:AccuracyToHitChance(TypeOfPrediction, accuracy) then
-                        return castpos, true, position
-                    else
-                        return castpos, false, position
-                    end
+                    CastPosition, WillHit, Position = self.VP:GetCircularCastPosition(target, delay, width, range, speed, source, collision)
                 end
              elseif skillshotType == SPELL_TYPE.CONE then
                 if aoe then
-                    local castpos, hitchance, count, position = self.VP:GetConeAOECastPosition(target, delay, width, range, speed, source)
-                    if hitchance >= self:AccuracyToHitChance(TypeOfPrediction, accuracy) then
-                        return castpos, true, count, position
-                    else
-                        return castpos, false, count, position
-                    end
+                    CastPosition, WillHit, NumberOfHits, Position = self.VP:GetConeAOECastPosition(target, delay, width, range, speed, source)
                 else
-                    local castpos, hitchance, position = self.VP:GetLineCastPosition(target, delay, width, range, speed, source, collision)
-                    if hitchance >= self:AccuracyToHitChance(TypeOfPrediction, accuracy) then
-                        return castpos, true, position
-                    else
-                        return castpos, false, position
-                    end
+                    CastPosition, WillHit, Position = self.VP:GetLineCastPosition(target, delay, width, range, speed, source, collision)
                 end
             end
         -- Prodiction
@@ -1542,39 +1569,29 @@ function _Prediction:GetPrediction(target, sp)
             local aoe = false
             if aoe then
                 if skillshotType == SPELL_TYPE.LINEAR then
-                    local pos, info, objects = Prodiction.GetLineAOEPrediction(target, range, speed, delay, width, source)
-                    local hitChance = collision and info.mCollision() and -1 or info.hitchance
-                    if hitChance >= self:AccuracyToHitChance(TypeOfPrediction, accuracy) then
-                        return pos, true, #objects, pos
-                    else
-                        return pos, false, #objects, pos
-                    end
+                    local CastPosition1, info, objects = Prodiction.GetLineAOEPrediction(target, range, speed, delay, width, source)
+                    local WillHit = collision and info.mCollision() and -1 or info.hitchance
+                    NumberOfHits = #objects
+                    CastPosition = CastPosition1
+                    Position = CastPosition1
                 elseif skillshotType == SPELL_TYPE.CIRCULAR then
-                    local pos, info, objects = Prodiction.GetCircularAOEPrediction(target, range, speed, delay, width, source)
-                    local hitChance = collision and info.mCollision() and -1 or info.hitchance
-                    if hitChance >= self:AccuracyToHitChance(TypeOfPrediction, accuracy) then
-                        return pos, true, #objects, pos
-                    else
-                        return pos, false, #objects, pos
-                    end
-                    return pos, hitChance, #objects
+                    local CastPosition1, info, objects = Prodiction.GetCircularAOEPrediction(target, range, speed, delay, width, source)
+                    local WillHit = collision and info.mCollision() and -1 or info.hitchance
+                    NumberOfHits = #objects
+                    CastPosition = CastPosition1
+                    Position = CastPosition1
                  elseif skillshotType == SPELL_TYPE.CONE then
-                    local pos, info, objects = Prodiction.GetConeAOEPrediction(target, range, speed, delay, width, source)
-                    local hitChance = collision and info.mCollision() and -1 or info.hitchance
-                    if hitChance >= self:AccuracyToHitChance(TypeOfPrediction, accuracy) then
-                        return pos, true, #objects, pos
-                    else
-                        return pos, false, #objects, pos
-                    end
+                    local CastPosition1, info, objects = Prodiction.GetConeAOEPrediction(target, range, speed, delay, width, source)
+                    local WillHit = collision and info.mCollision() and -1 or info.hitchance
+                    NumberOfHits = #objects
+                    CastPosition = CastPosition1
+                    Position = CastPosition1
                 end
             else
-                local pos, info = Prodiction.GetPrediction(target, range, speed, delay, width, source)
-                local hitChance = collision and info.mCollision() and -1 or info.hitchance
-                if hitChance >= self:AccuracyToHitChance(TypeOfPrediction, accuracy) then
-                    return pos, true, info.pos
-                else
-                    return pos, false, info.pos
-                end
+                local CastPosition1, info = Prodiction.GetPrediction(target, range, speed, delay, width, source)
+                local WillHit = collision and info.mCollision() and -1 or info.hitchance
+                CastPosition = CastPosition1
+                Position = CastPosition1
             end
         elseif TypeOfPrediction == "DivinePred" then
             local spell = nil
@@ -1583,18 +1600,15 @@ function _Prediction:GetPrediction(target, sp)
             if skillshotType == SPELL_TYPE.LINEAR then
                 spell = LineSS(speed, range, width, delay * 1000, col)
             elseif skillshotType == SPELL_TYPE.CIRCULAR then
-                --spell = CircleSS(speed, range, width, delay * 1000, col)
-                spell = LineSS(speed, range, width, delay * 1000, col)
+                spell = CircleSS(speed, range, width, delay * 1000, col)
             elseif skillshotType == SPELL_TYPE.CONE then
                 spell = ConeSS(speed, range, width, delay * 1000, col)
             end
             local hitchance = self:AccuracyToHitChance(TypeOfPrediction, accuracy)
             local state, pos, perc = self.DP:predict(unit, spell, hitchance, Vector(source))
-            if state == SkillShot.STATUS.SUCCESS_HIT and perc >= 50 then
-                return pos, true, pos
-            else
-                return pos, false, pos
-            end
+            WillHit = (state == SkillShot.STATUS.SUCCESS_HIT and perc >= 50) or ( self:IsImmobile(target, sp) )
+            CastPosition = pos
+            Position = pos
         elseif TypeOfPrediction == "HPrediction" then
             local tipo = "PromptCircle"
             local tab = {}
@@ -1640,29 +1654,29 @@ function _Prediction:GetPrediction(target, sp)
             tab.delay = delay
             tab.type = tipo
             if aoe then
-                local pos, hitchance, noh = self.HP:GetPredict(HPSkillshot(tab), target, source, aoe)--, range, width
-                if hitchance >= self:AccuracyToHitChance(TypeOfPrediction, accuracy) then
-                    return pos, true, noh, pos
-                else
-                    return pos, false, noh, pos
-                end
+                CastPosition, WillHit, NumberOfHits = self.HP:GetPredict(HPSkillshot(tab), target, source, aoe)
+                Position = CastPosition
             else
-                local pos, hitchance = self.HP:GetPredict(HPSkillshot(tab), target, source)--, range, width
-                if hitchance >= self:AccuracyToHitChance(TypeOfPrediction, accuracy) then
-                    return pos, true, pos
-                else
-                    return pos, false, pos
-                end
+                CastPosition, WillHit = self.HP:GetPredict(HPSkillshot(tab), target, source)
+                Position = CastPosition
             end
         elseif TypeOfPrediction == "SPrediction" then
-            local castpos, hitchance, pos = self.SP:Predict(target, range, speed, delay, width, collision, source)
-            if hitchance >= self:AccuracyToHitChance(TypeOfPrediction, accuracy) then
-                return castpos, true, pos
-            else
-                return castpos, false, pos
+            CastPosition, WillHit, Position = self.SP:Predict(target, range, speed, delay, width, collision, source)
+        end
+        if WillHit then
+            if type(WillHit) == "number" then
+                WillHit = WillHit >= self:AccuracyToHitChance(TypeOfPrediction, accuracy) or self:IsImmobile(target, sp)
             end
+        else
+            WillHit = false
+        end
+        if aoe then
+            return CastPosition, WillHit, NumberOfHits, Position
+        else
+            return CastPosition, WillHit, Position
         end
     end
+    return nil, false, nil
 end
 
 function _Prediction:GetPredictedPos(target, tab)
@@ -1893,7 +1907,7 @@ function _OrbwalkManager:OnProcessSpell(unit, spell)
                 function()
                     self:ResetAA()
                 end
-                ,2 * GetLatency()/2000)
+                ,2 * Latency())
         end
     end
 end
@@ -2284,7 +2298,7 @@ function _Initiator:__init(menu)
                         local spelltype, casttype = getSpellType(unit, spell.name)
                         if spelltype == "Q" or spelltype == "W" or spelltype == "E" or spelltype == "R" then
                             if self.Menu[unit.charName..spelltype] then 
-                                table.insert(self.ActiveSpells, {Time = os.clock() - GetLatency() / 2000, Unit = unit})
+                                table.insert(self.ActiveSpells, {Time = os.clock() - Latency(), Unit = unit})
                             end
                         end
                     end
@@ -2296,7 +2310,7 @@ function _Initiator:__init(menu)
                 if #self.ActiveSpells > 0 then
                     for i = #self.ActiveSpells, 1, -1 do
                         local spell = self.ActiveSpells[i]
-                        if os.clock() + GetLatency()/2000 - spell.Time <= self.Menu.Time then
+                        if os.clock() + Latency() - spell.Time <= self.Menu.Time then
                             self:TriggerCallbacks(spell.Unit)
                         else
                             table.remove(self.ActiveSpells, i)
@@ -2369,11 +2383,11 @@ function _Evader:__init(menu)
                             if self.Menu[unit.charName..spelltype] then
                                 DelayAction(
                                     function() 
-                                        table.insert(self.ActiveSpells, {Time = os.clock() - GetLatency() / 2000, Unit = unit, Spell = spell, SpellType = spelltype})
+                                        table.insert(self.ActiveSpells, {Time = os.clock() - Latency(), Unit = unit, Spell = spell, SpellType = spelltype})
                                         self:CheckHitChampion(unit, spell, spelltype)
                                     end
                                 , 
-                                    math.max(spell.windUpTime * self.Menu.Humanizer/100 - 2 * GetLatency() / 2000, 0)
+                                    math.max(spell.windUpTime * self.Menu.Humanizer/100 - 2 * Latency(), 0)
                                 )
                             end
                         end
@@ -2387,7 +2401,7 @@ function _Evader:__init(menu)
                 if #self.ActiveSpells > 0 then
                     for i = #self.ActiveSpells, 1, -1 do
                         local sp = self.ActiveSpells[i]
-                        if os.clock() + GetLatency()/2000 - sp.Time <= self.Menu.Time then
+                        if os.clock() + Latency() - sp.Time <= self.Menu.Time then
                             local unit = sp.Unit
                             local spell = sp.Spell
                             local spelltype = sp.SpellType
@@ -2480,7 +2494,7 @@ function _Interrupter:__init(menu)
                         local spelltype, casttype = getSpellType(unit, spell.name)
                         if spelltype == "Q" or spelltype == "W" or spelltype == "E" or spelltype == "R" then
                             if self.Menu[unit.charName..spelltype] then 
-                                table.insert(self.ActiveSpells, {Time = os.clock() - GetLatency() / 2000, Unit = unit, Spell = spell})
+                                table.insert(self.ActiveSpells, {Time = os.clock() - Latency(), Unit = unit, Spell = spell})
                             end
                         end
                     end
@@ -2492,7 +2506,7 @@ function _Interrupter:__init(menu)
                 if #self.ActiveSpells > 0 then
                     for i = #self.ActiveSpells, 1, -1 do
                         local spell = self.ActiveSpells[i]
-                        if os.clock() + GetLatency()/2000 - spell.Time <= self.Menu.Time then
+                        if os.clock() + Latency() - spell.Time <= self.Menu.Time then
                             self:TriggerCallbacks(spell.Unit, spell.Spell)
                         else
                             table.remove(self.ActiveSpells, i)
