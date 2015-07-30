@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 0.87
+_G.SimpleLibVersion = 0.88
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1519,7 +1519,7 @@ function _Prediction:IsImmobile(target, sp)
         local source = sp.Source ~= nil and sp.Source or myHero
         local ExtraDelay = speed == math.huge and 0 or (GetDistance(source, target) / speed)
         range = range + skillshotType == SPELL_TYPE.CIRCULAR and width or 0
-        if self.UnitsImmobile[target.networkID].Duration - (os.clock() + Latency() - self.UnitsImmobile[target.networkID].Time) >= delay + ExtraDelay and GetDistanceSqr(source, target) <= math.pow(range, 2) then
+        if not collision and self.UnitsImmobile[target.networkID].Duration - (os.clock() + Latency() - self.UnitsImmobile[target.networkID].Time) >= delay + ExtraDelay and GetDistanceSqr(source, target) <= math.pow(range, 2) then
             return true
         end
     end
