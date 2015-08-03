@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 0.90
+_G.SimpleLibVersion = 0.91
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -726,6 +726,7 @@ function _Spell:__init(tab)
         self.Speed = tab.Speed ~= nil and tab.Speed or math.huge
         self.Collision = tab.Collision ~= nil and tab.Collision or false
         self.Aoe = tab.Aoe ~= nil and tab.Aoe or false
+        self.IsVeryLowAccuracy = tab.IsVeryLowAccuracy
         if self:IsSkillShot() then
             Prediction:LoadPredictions()
             self:AddToMenu()
@@ -843,7 +844,7 @@ end
 function _Spell:YasuoWall(vector)
     if YasuoWall ~= nil and self.Speed ~= math.huge and vector ~= nil then
         for i, enemy in ipairs(GetEnemyHeroes()) do
-            if enemy.charName == "Yasuo" then
+            if enemy.charName:lower():find("yasuo") then
                 local level = enemy:GetSpellData(_W) ~= nil and enemy:GetSpellData(_W).level ~= nil and enemy:GetSpellData(_W).level or 0
                 local width = 250 + level * 50
                 local pos1 = Vector(YasuoWall.Object) + Vector(Vector(YasuoWall.Object) - Vector(YasuoWall.StartVector)):normalized():perpendicular() * width/2
@@ -918,7 +919,11 @@ function _Spell:GetPrediction(target, t)
             local range = t ~= nil and t.Range ~= nil and t.Range or self.Range
             local accuracy = t ~= nil and t.Accuracy ~= nil and t.Accuracy or self:GetAccuracy()
             local source = t ~= nil and t.Source ~= nil and t.Source or self.Source
-            local tab = {Delay = self.Delay, Width = self.Width, Speed = self.Speed, Range = range, Source = source, Type = self.Type, Collision = self.Collision, Aoe = self.Aoe, TypeOfPrediction = pred, Accuracy = accuracy, Slot = self.Slot}
+            local delay = t ~= nil and t.Delay ~= nil and t.Delay or self.Delay
+            local speed = t ~= nil and t.Speed ~= nil and t.Speed or self.Speed
+            local width = t ~= nil and t.Width ~= nil and t.Width or self.Width
+            local type = t ~= nil and t.Type ~= nil and t.Type or self.Type
+            local tab = {Delay = self.Delay, Width = width, Speed = speed, Range = range, Source = source, Type = type, Collision = self.Collision, Aoe = self.Aoe, TypeOfPrediction = pred, Accuracy = accuracy, Slot = self.Slot, IsVeryLowAccuracy = self.IsVeryLowAccuracy}
             return Prediction:GetPrediction(target, tab)
         elseif self:IsSelf() then
             local pred = t ~= nil and t.TypeOfPrediction ~= nil and t.TypeOfPrediction or self:PredictionSelected()
@@ -1099,7 +1104,7 @@ function _Spell:Damage(target, stage)
             return getDmg(self.DamageName, target, myHero, stage) + getDmg("AD", target, myHero, stage)
         end
         if self.DamageFunction ~= nil then
-            return self.DamageFunction(self.DamageName, target)
+            return self.DamageFunction(self.DamageName, target, stage)
         end
         if self.DamageName == "SMITE" then
             if IsValidTarget(target) then
@@ -1150,7 +1155,7 @@ function _Spell:LaneClear(tab)
         local NumberOfHits = tab ~= nil and tab.NumberOfHits ~= nil and type(tab.NumberOfHits) == "number" and tab.NumberOfHits or 1
         local UseCast = true
         if tab ~= nil and tab.UseCast ~= nil and type(tab.UseCast) == "boolean" then UseCast = tab.UseCast end
-        if NumberOfHits >= 1 then
+        if NumberOfHits >= 1 and #self.EnemyMinions.objects >= NumberOfHits then
             if self:IsLinear() then
                 local bestMinion, hits = GetBestLineFarmPosition(self.Range, self.Width, self.EnemyMinions.objects)
                 if hits >= NumberOfHits then
@@ -1623,6 +1628,9 @@ function _Prediction:GetPrediction(target, sp)
             local tab = {}
             range = GetDistance(source, myHero) + range
             local time = delay + range/speed
+            if sp.IsVeryLowAccuracy ~= nil then
+                tab.IsVeryLowAccuracy = sp.IsVeryLowAccuracy
+            end
             if time > 1 and width <= 120 then
                 tab.IsVeryLowAccuracy = true
             elseif time > 0.8 and width <= 100 then
@@ -3317,7 +3325,7 @@ if _G.SimpleLibLoaded == nil then
             function(unit, spell)
                 if myHero.dead then return end
                 if unit and spell and unit.charName and spell.name then
-                    if unit.charName == "Yasuo" and spell.name:lower():find("yasuowmovingwall") then
+                    if unit.charName:find("yasuo") and spell.name:lower():find("yasuow") then
                         YasuoWall = {StartVector = Vector(unit), EndVector = Vector(spell.endPos.x, unit.y, spell.endPos.z)}
                         DelayAction(function() YasuoWall = nil end, 4.5)
                     end
