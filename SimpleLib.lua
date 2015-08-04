@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 0.91
+_G.SimpleLibVersion = 0.92
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1813,8 +1813,8 @@ function _OrbwalkManager:__init()
     self.LastAnimationName = ""
     self.AA = {LastTime = 0, LastTarget = nil, IsAttacking = false, Object = nil}
     
-    self.EnemyMinions = minionManager(MINION_ENEMY, myHero.range + myHero.boundingRadius + 100, myHero, MINION_SORT_HEALTH_ASC)
-    self.JungleMinions = minionManager(MINION_JUNGLE, myHero.range + myHero.boundingRadius + 100, myHero, MINION_SORT_MAXHEALTH_DEC)
+    self.EnemyMinions = minionManager(MINION_ENEMY, myHero.range + myHero.boundingRadius + 500, myHero, MINION_SORT_HEALTH_ASC)
+    self.JungleMinions = minionManager(MINION_JUNGLE, myHero.range + myHero.boundingRadius + 500, myHero, MINION_SORT_MAXHEALTH_DEC)
 
     if _G.OrbwalkManagerMenu == nil then
         _G.OrbwalkManagerMenu = scriptConfig("SimpleLib - Orbwalk Manager", "OrbwalkManager".."24052015"..myHero.charName)
@@ -3109,7 +3109,7 @@ function _SimpleTargetSelector:__init(mode, range, damageType)
                 local best = nil
                 for i, enemy in ipairs(GetEnemyHeroes()) do
                     if IsValidTarget(enemy) then
-                        if GetDistanceSqr(enemy, mousePos) < math.pow(200, 2) then
+                        if GetDistanceSqr(enemy, mousePos) < math.pow(150, 2) then
                             local p = WorldToScreen(D3DXVECTOR3(enemy.x, enemy.y, enemy.z))
                             if OnScreen(p.x, p.y) then
                                 if best == nil then
