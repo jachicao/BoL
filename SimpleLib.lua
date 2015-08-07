@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 0.92
+_G.SimpleLibVersion = 0.93
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -923,7 +923,7 @@ function _Spell:GetPrediction(target, t)
             local speed = t ~= nil and t.Speed ~= nil and t.Speed or self.Speed
             local width = t ~= nil and t.Width ~= nil and t.Width or self.Width
             local type = t ~= nil and t.Type ~= nil and t.Type or self.Type
-            local tab = {Delay = self.Delay, Width = width, Speed = speed, Range = range, Source = source, Type = type, Collision = self.Collision, Aoe = self.Aoe, TypeOfPrediction = pred, Accuracy = accuracy, Slot = self.Slot, IsVeryLowAccuracy = self.IsVeryLowAccuracy}
+            local tab = {Delay = delay, Width = width, Speed = speed, Range = range, Source = source, Type = type, Collision = self.Collision, Aoe = self.Aoe, TypeOfPrediction = pred, Accuracy = accuracy, Slot = self.Slot, IsVeryLowAccuracy = self.IsVeryLowAccuracy}
             return Prediction:GetPrediction(target, tab)
         elseif self:IsSelf() then
             local pred = t ~= nil and t.TypeOfPrediction ~= nil and t.TypeOfPrediction or self:PredictionSelected()
@@ -1609,7 +1609,6 @@ function _Prediction:GetPrediction(target, sp)
             end
         elseif TypeOfPrediction == "DivinePred" then
             local spell = nil
-            local unit = DPTarget(target)
             local col = collision and 0 or math.huge
             if skillshotType == SPELL_TYPE.LINEAR then
                 spell = LineSS(speed, range, width, delay * 1000, col)
@@ -1619,7 +1618,7 @@ function _Prediction:GetPrediction(target, sp)
                 spell = ConeSS(speed, range, width, delay * 1000, col)
             end
             local hitchance = self:AccuracyToHitChance(TypeOfPrediction, accuracy)
-            local state, pos, perc = self.DP:predict(unit, spell, hitchance, Vector(source))
+            local state, pos, perc = self.DP:predict(DPTarget(target), spell, hitchance, Vector(source))
             WillHit = ((state == SkillShot.STATUS.SUCCESS_HIT and perc >= 50) or self:IsImmobile(target, sp)) 
             CastPosition = pos
             Position = pos
