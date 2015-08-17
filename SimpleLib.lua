@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 0.94
+_G.SimpleLibVersion = 0.95
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -651,44 +651,51 @@ end
 function _SpellManager:AddPrediction()
     if _G.SpellManagerMenu ~= nil then
         if _G.SpellManagerMenu.PredictionSelected == nil then
-            local counter = 0
-            for i, spell in ipairs(self.spells) do
-                if spell.Menu ~= nil then
-                    if spell.Menu.PredictionSelected ~= nil then
-                        counter = counter + 1
-                    end
-                end
+            local tab = {" "}
+            for i, name in ipairs(Prediction.PredictionList) do
+                table.insert(tab, name)
             end
-            if counter > 0 then
-                local tab = {" "}
-                for i, name in ipairs(Prediction.PredictionList) do
-                    table.insert(tab, name)
-                end
-                _G.SpellManagerMenu:addParam("PredictionSelected", "Set All Skillshots to: ", SCRIPT_PARAM_LIST, 1, tab)
-                AddTickCallback(
-                    function()
-                        if _G.SpellManagerMenu.PredictionSelected ~= 1 then
-                            for i, spell in ipairs(self.spells) do
-                                if spell.Menu ~= nil then
-                                    if spell.Menu.PredictionSelected ~= nil then
-                                        spell.Menu.PredictionSelected = _G.SpellManagerMenu.PredictionSelected -1
-                                    end
-                                end
-                            end
-                            _G.SpellManagerMenu.PredictionSelected = 1
-                        end
-                    end
-                )
-            end
+            _G.SpellManagerMenu:addParam("PredictionSelected", "Set All Skillshots to: ", SCRIPT_PARAM_LIST, 1, tab)
+            self:LoadTickCallback()
+        end
+    end
+end
+
+function _SpellManager:AddDraw()
+    if _G.SpellManagerMenu ~= nil then
+        if _G.SpellManagerMenu.DisableDraws == nil then
+            _G.SpellManagerMenu:addParam("DisableDraws", "Disable All Draws", SCRIPT_PARAM_ONOFF, false)
         end
     end
 end
 
 function _SpellManager:AddLastHit()
     if _G.SpellManagerMenu ~= nil then
-        if _G.SpellManagerMenu.FarmDelay == nil then
+        if not _G.SpellManagerMenu.FarmDelay then
             _G.SpellManagerMenu:addParam("FarmDelay", "Delay for LastHit (in ms)", SCRIPT_PARAM_SLICE, 0, -150, 150)
         end
+    end
+end
+
+function _SpellManager:LoadTickCallback()
+    if not self.TickCallback then
+        self.TickCallback = true
+        AddTickCallback(
+            function()
+                if _G.SpellManagerMenu ~= nil then
+                    if _G.SpellManagerMenu.PredictionSelected ~= nil and _G.SpellManagerMenu.PredictionSelected ~= 1 then
+                        for i, spell in ipairs(self.spells) do
+                            if spell.Menu ~= nil then
+                                if spell.Menu.PredictionSelected ~= nil then
+                                    spell.Menu.PredictionSelected = _G.SpellManagerMenu.PredictionSelected -1
+                                end
+                            end
+                        end
+                        _G.SpellManagerMenu.PredictionSelected = 1
+                    end
+                end
+            end
+        )
     end
 end
 
@@ -749,8 +756,9 @@ end
 
 function _Spell:AddDraw(t)
     self:AddToMenu()
-    if self.Menu~=nil then
-        local table = {Menu = self.Menu, Name = self.Name.."Drawing", Text = "Drawing Settings", Source = function() if self.DrawSourceFunction ~= nil then return self.DrawSource end return self.Source end, Range = function() return self.Range end, Condition = function() return self:IsReady() end}
+    SpellManager:AddDraw()
+    if self.Menu ~= nil then
+        local table = {Menu = self.Menu, Name = "Draw", Text = "Drawing Settings", Source = function() if self.DrawSourceFunction ~= nil then return self.DrawSource end return self.Source end, Range = function() return self.Range end, Condition = function() return self:IsReady() and not _G.SpellManagerMenu.DisableDraws end}
         local enable = true
         if t ~= nil and t.Enable ~= nil and type(t.Enable) == "boolean" then enable = t.Enable end
         local color = t ~= nil and t.Color ~= nil and t.Color or { 255, 255, 255, 255 }
