@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 0.95
+_G.SimpleLibVersion = 0.96
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -299,7 +299,7 @@ function FindItemSlot(name)
 end
 
 function FindSummonerSlot(name)
-    for slot = SUMMONER_1,SUMMONER_2 do
+    for slot = SUMMONER_1, SUMMONER_2 do
         if myHero:GetSpellData(slot)  ~= nil and myHero:GetSpellData(slot).name  ~= nil and myHero:GetSpellData(slot).name:lower():find(name:lower()) then
             return slot
         end
@@ -463,17 +463,14 @@ function _arrangePriorities()
         [4] = {1,2,3,4,4},
         [5] = {1,2,3,4,5},
     }
-    local function _SetPriority(table, hero, priority)
+    local function _SetPriority(tab, hero, priority)
         if table ~= nil and hero ~= nil and priority ~= nil and type(table) == "table" then
-            for i=1, #table, 1 do
-                if hero.charName:find(table[i]) ~= nil and type(priority) == "number" then
+            for i=1, #tab, 1 do
+                if hero.charName:find(tab[i]) ~= nil and type(priority) == "number" then
                     TS_SetHeroPriority(priority, hero.charName)
                 end
             end
         end
-    end
-    for i=1, #table, 1 do
-
     end
     local enemies = #GetEnemyHeroes()
     if priorityTable2~=nil and type(priorityTable2) == "table" and enemies > 0 then
@@ -870,11 +867,7 @@ end
 function _Spell:CastToVector(vector)
     if self:IsReady() and vector ~= nil and not IsEvading() then
         if self:YasuoWall(vector) then return end
-        if VIP_USER then
-            Packet("S_CAST", {spellId = self.Slot, toX = vector.x, toY = vector.z, fromX = vector.x, fromY = vector.z}):send()
-        else
-            CastSpell(self.Slot, vector.x, vector.z)
-        end
+        CastSpell(self.Slot, vector.x, vector.z)
     end
 end
 
@@ -892,29 +885,17 @@ function _Spell:Cast(target, t)
                 end
             elseif self:IsTargetted() then
                 if self:YasuoWall(target) then return end
-                if VIP_USER then
-                    Packet("S_CAST", {spellId = self.Slot, toX = target.x, toY = target.z, fromX = target.x, fromY = target.z, targetNetworkId = target.networkID}):send()
-                else
-                    CastSpell(self.Slot, target)
-                end
+                CastSpell(self.Slot, target)
             elseif self:IsSelf() then
                 local CastPosition,  WillHit = self:GetPrediction(target, t)
                 if CastPosition ~= nil and GetDistanceSqr(self.Source, CastPosition) <= self.Range * self.Range then
                     if (target.type == myHero.type and WillHit) or (target.type ~= myHero.type) then
-                        if VIP_USER then
-                            Packet("S_CAST", {spellId = self.Slot, toX = myHero.x, toY = myHero.z, fromX = myHero.x, fromY = myHero.z, targetNetworkId = myHero.networkID}):send()
-                        else
-                            CastSpell(self.Slot)
-                        end
+                        CastSpell(self.Slot)
                     end
                 end
             end
         elseif target == nil and self:IsSelf() then
-            if VIP_USER then
-                Packet("S_CAST", {spellId = self.Slot, toX = myHero.x, toY = myHero.z, fromX = myHero.x, fromY = myHero.z, targetNetworkId = myHero.networkID}):send()
-            else
-                CastSpell(self.Slot)
-            end
+            CastSpell(self.Slot)
         end
     end
 end
@@ -1499,7 +1480,7 @@ function _Prediction:TimeRequest(TypeOfPrediction)
     elseif TypeOfPrediction == "Prodiction" then
         return 0
     elseif TypeOfPrediction == "DivinePred" then
-        return 0
+        return 0.08
     elseif TypeOfPrediction == "HPrediction" then
         return 0
     elseif TypeOfPrediction == "SPrediction" then
@@ -1998,8 +1979,8 @@ function _OrbwalkManager:TakeControl()
             self:DisableAttacks()
         end
     end)
-    if VIP_USER then HookPackets() end
     if VIP_USER then 
+        HookPackets()
         AddSendPacketCallback(
             function(p)
                 p.pos = 2
@@ -3313,7 +3294,7 @@ if _G.SimpleLibLoaded == nil then
             function(unit, spell)
                 if myHero.dead then return end
                 if unit and spell and unit.charName and spell.name then
-                    if unit.charName:find("yasuo") and spell.name:lower():find("yasuow") then
+                    if unit.charName:lower():find("yasuo") and spell.name:lower():find("yasuow") then
                         YasuoWall = {StartVector = Vector(unit), EndVector = Vector(spell.endPos.x, unit.y, spell.endPos.z)}
                         DelayAction(function() YasuoWall = nil end, 4.5)
                     end
