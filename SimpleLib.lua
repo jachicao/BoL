@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 0.96
+_G.SimpleLibVersion = 0.97
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1293,7 +1293,7 @@ function _Spell:LastHit(tab)
                                 local ProjectileSpeed = Prediction.VP:GetProjectileSpeed(myHero)
                                 local time = OrbwalkManager:WindUpTime() + GetDistance(myHero, object) / ProjectileSpeed + ExtraTime()
                                 local predHealth = Prediction.VP:GetPredictedHealth(object, time, delay)
-                                if predHealth <= 0 then
+                                if predHealth <= 20 then
                                     CanCalculate = true
                                 end
                             end
@@ -1480,7 +1480,7 @@ function _Prediction:TimeRequest(TypeOfPrediction)
     elseif TypeOfPrediction == "Prodiction" then
         return 0
     elseif TypeOfPrediction == "DivinePred" then
-        return 0.08
+        return 0.15
     elseif TypeOfPrediction == "HPrediction" then
         return 0
     elseif TypeOfPrediction == "SPrediction" then
