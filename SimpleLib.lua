@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 0.97
+_G.SimpleLibVersion = 0.98
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1372,12 +1372,13 @@ function _Prediction:__init()
         self.Actives["HPrediction"] = true
         self.HP = HPrediction()
     end
+    --[[
     if VIP_USER and FileExist(LIB_PATH.."DivinePred.lua") and FileExist(LIB_PATH.."DivinePred.luac") then
         require "DivinePred"
         table.insert(self.PredictionList, "DivinePred") 
         self.Actives["DivinePred"] = true
         self.DP = DivinePred()
-    end
+    end]]
     if FileExist(LIB_PATH.."SPrediction.lua") and FileExist(LIB_PATH.."Collision.lua") then
         require "SPrediction"
         table.insert(self.PredictionList, "SPrediction") 
@@ -1566,7 +1567,7 @@ function _Prediction:GetPrediction(target, sp)
                 spell = ConeSS(speed, range, width, delay * 1000, col)
             end
             local hitchance = self:AccuracyToHitChance(TypeOfPrediction, accuracy)
-            local state, pos, perc = self.DP:predict(DPTarget(target), spell, hitchance, Vector(source))
+            local state, pos, perc = self.DP:predict(DPTarget(target), spell, hitchance, source)
             WillHit = ((state == SkillShot.STATUS.SUCCESS_HIT and perc >= 50) or self:IsImmobile(target, sp)) 
             CastPosition = pos
             Position = pos
