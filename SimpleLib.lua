@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 0.98
+_G.SimpleLibVersion = 0.99
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1075,7 +1075,7 @@ function _Spell:IsReady()
             return myHero:CanUseSpell(self.Slot) == READY or myHero:CanUseSpell(self.Slot) == 3
         end
     end
-    return self.Slot ~= nil and self:CanUseSpell() == READY
+    return self.Slot ~= nil and (self:CanUseSpell() == READY or self:GetSpellData().currentCd <= Latency())
 end
 
 function _Spell:GetSpellData()
