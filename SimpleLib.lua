@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 0.99
+_G.SimpleLibVersion = 1.00
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -911,7 +911,7 @@ function _Spell:GetPrediction(target, t)
             local speed = t ~= nil and t.Speed ~= nil and t.Speed or self.Speed
             local width = t ~= nil and t.Width ~= nil and t.Width or self.Width
             local type = t ~= nil and t.Type ~= nil and t.Type or self.Type
-            local tab = {Delay = delay, Width = width, Speed = speed, Range = range, Source = source, Type = type, Collision = self.Collision, Aoe = self.Aoe, TypeOfPrediction = pred, Accuracy = accuracy, Slot = self.Slot, IsVeryLowAccuracy = self.IsVeryLowAccuracy}
+            local tab = {Delay = delay, Width = width, Speed = speed, Range = range, Source = source, Type = type, Collision = self.Collision, Aoe = self.Aoe, TypeOfPrediction = pred, Accuracy = accuracy, Slot = self.Slot, IsVeryLowAccuracy = self.IsVeryLowAccuracy, Name = self.Name}
             return Prediction:GetPrediction(target, tab)
         elseif self:IsSelf() then
             local pred = t ~= nil and t.TypeOfPrediction ~= nil and t.TypeOfPrediction or self:PredictionSelected()
@@ -1372,13 +1372,13 @@ function _Prediction:__init()
         self.Actives["HPrediction"] = true
         self.HP = HPrediction()
     end
-    --[[
     if VIP_USER and FileExist(LIB_PATH.."DivinePred.lua") and FileExist(LIB_PATH.."DivinePred.luac") then
         require "DivinePred"
         table.insert(self.PredictionList, "DivinePred") 
         self.Actives["DivinePred"] = true
+        self.BindedSpells = {}
         self.DP = DivinePred()
-    end]]
+    end
     if FileExist(LIB_PATH.."SPrediction.lua") and FileExist(LIB_PATH.."Collision.lua") then
         require "SPrediction"
         table.insert(self.PredictionList, "SPrediction") 
@@ -1526,6 +1526,7 @@ function _Prediction:GetPrediction(target, sp)
         local aoe = sp.Aoe ~= nil and sp.Aoe or false
         local accuracy = sp.Accuracy ~= nil and sp.Accuracy or 60
         local source = sp.Source ~= nil and sp.Source or myHero
+        local name = sp.Name ~= nil and sp.Name or "Q"
         TypeOfPrediction = (not target.type:lower():find("hero")) and "VPrediction" or TypeOfPrediction
         -- VPrediction
         if TypeOfPrediction == "Prodiction" and self.Actives[TypeOfPrediction] then
@@ -1557,20 +1558,39 @@ function _Prediction:GetPrediction(target, sp)
                 Position = CastPosition1
             end
         elseif TypeOfPrediction == "DivinePred" and self.Actives[TypeOfPrediction] then
-            local spell = nil
             local col = collision and 0 or math.huge
-            if skillshotType == SPELL_TYPE.LINEAR then
-                spell = LineSS(speed, range, width, delay * 1000, col)
-            elseif skillshotType == SPELL_TYPE.CIRCULAR then
-                spell = CircleSS(speed, range, width, delay * 1000, col)
-            elseif skillshotType == SPELL_TYPE.CONE then
-                spell = ConeSS(speed, range, width, delay * 1000, col)
+            if self.BindedSpells[name] == nil then
+                local spell = nil
+                if skillshotType == SPELL_TYPE.LINEAR then
+                    spell = LineSS(speed, range, width, delay * 1000, col)
+                elseif skillshotType == SPELL_TYPE.CIRCULAR then
+                    spell = CircleSS(speed, range, width, delay * 1000, col)
+                elseif skillshotType == SPELL_TYPE.CONE then
+                    spell = ConeSS(speed, range, width, delay * 1000, col)
+                end
+                self.BindedSpells[name] = self.DP:bindSS(name, spell, 50)
+            else
+                self.BindedSpells[name].range = range
+                self.BindedSpells[name].speed = speed
+                self.BindedSpells[name].radius = width
+                self.BindedSpells[name].delay = delay * 1000
+                self.BindedSpells[name].allowedCollisionCount = col
+                if skillshotType == SPELL_TYPE.LINEAR then
+                    self.BindedSpells[name].type = "LineSS"
+                elseif skillshotType == SPELL_TYPE.CIRCULAR then
+                    self.BindedSpells[name].type = "CircleSS"
+                elseif skillshotType == SPELL_TYPE.CONE then
+                    self.BindedSpells[name].type = "ConeSS"
+                end
             end
-            local hitchance = self:AccuracyToHitChance(TypeOfPrediction, accuracy)
-            local state, pos, perc = self.DP:predict(DPTarget(target), spell, hitchance, source)
-            WillHit = ((state == SkillShot.STATUS.SUCCESS_HIT and perc >= 50) or self:IsImmobile(target, sp)) 
-            CastPosition = pos
-            Position = pos
+            local state, pos, perc = self.DP:predict(name, target)
+            if state and pos and perc then
+                --local hitchance = self:AccuracyToHitChance(TypeOfPrediction, accuracy)
+                --local state, pos, perc = self.DP:predict(DPTarget(target), spell, hitchance, source)
+                WillHit = ((state == SkillShot.STATUS.SUCCESS_HIT and perc >= 50) or self:IsImmobile(target, sp)) 
+                CastPosition = pos
+                Position = pos
+            end
         elseif TypeOfPrediction == "HPrediction" and self.Actives[TypeOfPrediction] then
             local tipo = "PromptCircle"
             local tab = {}
