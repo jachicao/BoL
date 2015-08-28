@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.00
+_G.SimpleLibVersion = 1.01
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1583,7 +1583,7 @@ function _Prediction:GetPrediction(target, sp)
                     self.BindedSpells[name].type = "ConeSS"
                 end
             end
-            local state, pos, perc = self.DP:predict(name, target)
+            local state, pos, perc = self.DP:predict(name, target, Vector(source))
             if state and pos and perc then
                 --local hitchance = self:AccuracyToHitChance(TypeOfPrediction, accuracy)
                 --local state, pos, perc = self.DP:predict(DPTarget(target), spell, hitchance, source)
