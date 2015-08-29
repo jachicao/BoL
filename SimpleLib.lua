@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.02
+_G.SimpleLibVersion = 1.03
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -901,10 +901,14 @@ function _Spell:Cast(target, t)
 end
 
 function _Spell:GetPrediction(target, t)
-    if self:ValidTarget(target) then
+    local range = t ~= nil and t.Range ~= nil and t.Range or self.Range
+    local temp = self.Range
+    self.Range = range
+    local boolean = self:ValidTarget(target)
+    self.Range = temp
+    if boolean then
         if self:IsSkillShot() then
             local pred = t ~= nil and t.TypeOfPrediction ~= nil and t.TypeOfPrediction or self:PredictionSelected()
-            local range = t ~= nil and t.Range ~= nil and t.Range or self.Range
             local accuracy = t ~= nil and t.Accuracy ~= nil and t.Accuracy or self:GetAccuracy()
             local source = t ~= nil and t.Source ~= nil and t.Source or self.Source
             local delay = t ~= nil and t.Delay ~= nil and t.Delay or self.Delay
@@ -1266,7 +1270,7 @@ end
 function _Spell:LastHit(tab)
     SpellManager:AddLastHit()
     local mode = tab ~= nil and tab.Mode ~= nil and type(tab.Mode) == "number" and tab.Mode or LASTHIT_MODE.SMART
-    if self.EnemyMinions ~= nil and (self:IsSkillShot() or self:IsTargetted() or self:IsSelf()) and mode ~= LASTHIT_MODE.NEVER and self:IsReady() and Prediction.VP then
+    if self.EnemyMinions ~= nil and (self:IsSkillShot() or self:IsTargetted() or self:IsSelf()) and mode ~= LASTHIT_MODE.NEVER and self:IsReady() and _G.VP then
         if self.SourceFunction ~= nil then
             self.EnemyMinions.fromPos = self.Source
         end
@@ -1290,9 +1294,9 @@ function _Spell:LastHit(tab)
                             if not OrbwalkManager:InRange(object) then
                                 CanCalculate = true
                             else
-                                local ProjectileSpeed = Prediction.VP:GetProjectileSpeed(myHero)
+                                local ProjectileSpeed = _G.VP:GetProjectileSpeed(myHero)
                                 local time = OrbwalkManager:WindUpTime() + GetDistance(myHero, object) / ProjectileSpeed + ExtraTime()
-                                local predHealth = Prediction.VP:GetPredictedHealth(object, time, delay)
+                                local predHealth = _G.VP:GetPredictedHealth(object, time, delay)
                                 if predHealth <= 20 then
                                     CanCalculate = true
                                 end
@@ -1311,7 +1315,7 @@ function _Spell:LastHit(tab)
                         elseif self:IsSelf() then
                             time = self.Delay + GetDistance(object, self.Source) / self.Speed + ExtraTime()
                         end
-                        local predHealth = Prediction.VP:GetPredictedHealth(object, time, delay)
+                        local predHealth = _G.VP:GetPredictedHealth(object, time, delay)
                         if predHealth == object.health and self.Delay + GetDistance(object, self.Source) / self.Speed > 0 and mode == LASTHIT_MODE.SMART then return end 
                         if dmg > predHealth and predHealth > -1 then
                             if UseCast then
@@ -1350,6 +1354,7 @@ function _Prediction:__init()
         table.insert(self.PredictionList, "VPrediction")
         self.Actives["VPrediction"] = true
         self.VP = VPrediction()
+        _G.VP = self.VP
         self.VP.projectilespeeds = {["Velkoz"]= 2000, ["TeemoMushroom"] = math.huge, ["TestCubeRender"] = math.huge ,["Xerath"] = 2000.0000 ,["Kassadin"] = math.huge ,["Rengar"] = math.huge ,["Thresh"] = 1000.0000 ,["Ziggs"] = 1500.0000 ,["ZyraPassive"] = 1500.0000 ,["ZyraThornPlant"] = 1500.0000 ,["KogMaw"] = 1800.0000 ,["HeimerTBlue"] = 1599.3999 ,["EliseSpider"] = 500.0000 ,["Skarner"] = 500.0000 ,["ChaosNexus"] = 500.0000 ,["Katarina"] = 467.0000 ,["Riven"] = 347.79999 ,["SightWard"] = 347.79999 ,["HeimerTYellow"] = 1599.3999 ,["Ashe"] = 2000.0000 ,["VisionWard"] = 2000.0000 ,["TT_NGolem2"] = math.huge ,["ThreshLantern"] = math.huge ,["TT_Spiderboss"] = math.huge ,["OrderNexus"] = math.huge ,["Soraka"] = 1000.0000 ,["Jinx"] = 2750.0000 ,["TestCubeRenderwCollision"] = 2750.0000 ,["Red_Minion_Wizard"] = 650.0000 ,["JarvanIV"] = 20.0000 ,["Blue_Minion_Wizard"] = 650.0000 ,["TT_ChaosTurret2"] = 1200.0000 ,["TT_ChaosTurret3"] = 1200.0000 ,["TT_ChaosTurret1"] = 1200.0000 ,["ChaosTurretGiant"] = 1200.0000 ,["Dragon"] = 1200.0000 ,["LuluSnowman"] = 1200.0000 ,["Worm"] = 1200.0000 ,["ChaosTurretWorm"] = 1200.0000 ,["TT_ChaosInhibitor"] = 1200.0000 ,["ChaosTurretNormal"] = 1200.0000 ,["AncientGolem"] = 500.0000 ,["ZyraGraspingPlant"] = 500.0000 ,["HA_AP_OrderTurret3"] = 1200.0000 ,["HA_AP_OrderTurret2"] = 1200.0000 ,["Tryndamere"] = 347.79999 ,["OrderTurretNormal2"] = 1200.0000 ,["Singed"] = 700.0000 ,["OrderInhibitor"] = 700.0000 ,["Diana"] = 347.79999 ,["HA_FB_HealthRelic"] = 347.79999 ,["TT_OrderInhibitor"] = 347.79999 ,["GreatWraith"] = 750.0000 ,["Yasuo"] = 347.79999 ,["OrderTurretDragon"] = 1200.0000 ,["OrderTurretNormal"] = 1200.0000 ,["LizardElder"] = 500.0000 ,["HA_AP_ChaosTurret"] = 1200.0000 ,["Ahri"] = 1750.0000 ,["Lulu"] = 1450.0000 ,["ChaosInhibitor"] = 1450.0000 ,["HA_AP_ChaosTurret3"] = 1200.0000 ,["HA_AP_ChaosTurret2"] = 1200.0000 ,["ChaosTurretWorm2"] = 1200.0000 ,["TT_OrderTurret1"] = 1200.0000 ,["TT_OrderTurret2"] = 1200.0000 ,["TT_OrderTurret3"] = 1200.0000 ,["LuluFaerie"] = 1200.0000 ,["HA_AP_OrderTurret"] = 1200.0000 ,["OrderTurretAngel"] = 1200.0000 ,["YellowTrinketUpgrade"] = 1200.0000 ,["MasterYi"] = math.huge ,["Lissandra"] = 2000.0000 ,["ARAMOrderTurretNexus"] = 1200.0000 ,["Draven"] = 1700.0000 ,["FiddleSticks"] = 1750.0000 ,["SmallGolem"] = math.huge ,["ARAMOrderTurretFront"] = 1200.0000 ,["ChaosTurretTutorial"] = 1200.0000 ,["NasusUlt"] = 1200.0000 ,["Maokai"] = math.huge ,["Wraith"] = 750.0000 ,["Wolf"] = math.huge ,["Sivir"] = 1750.0000 ,["Corki"] = 2000.0000 ,["Janna"] = 1200.0000 ,["Nasus"] = math.huge ,["Golem"] = math.huge ,["ARAMChaosTurretFront"] = 1200.0000 ,["ARAMOrderTurretInhib"] = 1200.0000 ,["LeeSin"] = math.huge ,["HA_AP_ChaosTurretTutorial"] = 1200.0000 ,["GiantWolf"] = math.huge ,["HA_AP_OrderTurretTutorial"] = 1200.0000 ,["YoungLizard"] = 750.0000 ,["Jax"] = 400.0000 ,["LesserWraith"] = math.huge ,["Blitzcrank"] = math.huge ,["ARAMChaosTurretInhib"] = 1200.0000 ,["Shen"] = 400.0000 ,["Nocturne"] = math.huge ,["Sona"] = 1500.0000 ,["ARAMChaosTurretNexus"] = 1200.0000 ,["YellowTrinket"] = 1200.0000 ,["OrderTurretTutorial"] = 1200.0000 ,["Caitlyn"] = 2500.0000 ,["Trundle"] = 347.79999 ,["Malphite"] = 1000.0000 ,["Mordekaiser"] = math.huge ,["ZyraSeed"] = math.huge ,["Vi"] = 1000.0000 ,["Tutorial_Red_Minion_Wizard"] = 650.0000 ,["Renekton"] = math.huge ,["Anivia"] = 1400.0000 ,["Fizz"] = math.huge ,["Heimerdinger"] = 1500.0000 ,["Evelynn"] = 467.0000 ,["Rumble"] = 347.79999 ,["Leblanc"] = 1700.0000 ,["Darius"] = math.huge ,["OlafAxe"] = math.huge ,["Viktor"] = 2300.0000 ,["XinZhao"] = 20.0000 ,["Orianna"] = 1450.0000 ,["Vladimir"] = 1400.0000 ,["Nidalee"] = 1750.0000 ,["Tutorial_Red_Minion_Basic"] = math.huge ,["ZedShadow"] = 467.0000 ,["Syndra"] = 1800.0000 ,["Zac"] = 1000.0000 ,["Olaf"] = 347.79999 ,["Veigar"] = 1100.0000 ,["Twitch"] = 2500.0000 ,["Alistar"] = math.huge ,["Akali"] = 467.0000 ,["Urgot"] = 1300.0000 ,["Leona"] = 347.79999 ,["Talon"] = math.huge ,["Karma"] = 1500.0000 ,["Jayce"] = 347.79999 ,["Galio"] = 1000.0000 ,["Shaco"] = math.huge ,["Taric"] = math.huge ,["TwistedFate"] = 1500.0000 ,["Varus"] = 2000.0000 ,["Garen"] = 347.79999 ,["Swain"] = 1600.0000 ,["Vayne"] = 2000.0000 ,["Fiora"] = 467.0000 ,["Quinn"] = 2000.0000 ,["Kayle"] = math.huge ,["Blue_Minion_Basic"] = math.huge ,["Brand"] = 2000.0000 ,["Teemo"] = 1300.0000 ,["Amumu"] = 500.0000 ,["Annie"] = 1200.0000 ,["Odin_Blue_Minion_caster"] = 1200.0000 ,["Elise"] = 1600.0000 ,["Nami"] = 1500.0000 ,["Poppy"] = 500.0000 ,["AniviaEgg"] = 500.0000 ,["Tristana"] = 2250.0000 ,["Graves"] = 3000.0000 ,["Morgana"] = 1600.0000 ,["Gragas"] = math.huge ,["MissFortune"] = 2000.0000 ,["Warwick"] = math.huge ,["Cassiopeia"] = 1200.0000 ,["Tutorial_Blue_Minion_Wizard"] = 650.0000 ,["DrMundo"] = math.huge ,["Volibear"] = 467.0000 ,["Irelia"] = 467.0000 ,["Odin_Red_Minion_Caster"] = 650.0000 ,["Lucian"] = 2800.0000 ,["Yorick"] = math.huge ,["RammusPB"] = math.huge ,["Red_Minion_Basic"] = math.huge ,["Udyr"] = 467.0000 ,["MonkeyKing"] = 20.0000 ,["Tutorial_Blue_Minion_Basic"] = math.huge ,["Kennen"] = 1600.0000 ,["Nunu"] = 500.0000 ,["Ryze"] = 2400.0000 ,["Zed"] = 467.0000 ,["Nautilus"] = 1000.0000 ,["Gangplank"] = 1000.0000 ,["Lux"] = 1600.0000 ,["Sejuani"] = 500.0000 ,["Ezreal"] = 2000.0000 ,["OdinNeutralGuardian"] = 1800.0000 ,["Khazix"] = 500.0000 ,["Sion"] = math.huge ,["Aatrox"] = 347.79999 ,["Hecarim"] = 500.0000 ,["Pantheon"] = 20.0000 ,["Shyvana"] = 467.0000 ,["Zyra"] = 1700.0000 ,["Karthus"] = 1200.0000 ,["Rammus"] = math.huge ,["Zilean"] = 1200.0000 ,["Chogath"] = 500.0000 ,["Malzahar"] = 2000.0000 ,["YorickRavenousGhoul"] = 347.79999 ,["YorickSpectralGhoul"] = 347.79999 ,["JinxMine"] = 347.79999 ,["YorickDecayedGhoul"] = 347.79999 ,["XerathArcaneBarrageLauncher"] = 347.79999 ,["Odin_SOG_Order_Crystal"] = 347.79999 ,["TestCube"] = 347.79999 ,["ShyvanaDragon"] = math.huge ,["FizzBait"] = math.huge ,["Blue_Minion_MechMelee"] = math.huge ,["OdinQuestBuff"] = math.huge ,["TT_Buffplat_L"] = math.huge ,["TT_Buffplat_R"] = math.huge ,["KogMawDead"] = math.huge ,["TempMovableChar"] = math.huge ,["Lizard"] = 500.0000 ,["GolemOdin"] = math.huge ,["OdinOpeningBarrier"] = math.huge ,["TT_ChaosTurret4"] = 500.0000 ,["TT_Flytrap_A"] = 500.0000 ,["TT_NWolf"] = math.huge ,["OdinShieldRelic"] = math.huge ,["LuluSquill"] = math.huge ,["redDragon"] = math.huge ,["MonkeyKingClone"] = math.huge ,["Odin_skeleton"] = math.huge ,["OdinChaosTurretShrine"] = 500.0000 ,["Cassiopeia_Death"] = 500.0000 ,["OdinCenterRelic"] = 500.0000 ,["OdinRedSuperminion"] = math.huge ,["JarvanIVWall"] = math.huge ,["ARAMOrderNexus"] = math.huge ,["Red_Minion_MechCannon"] = 1200.0000 ,["OdinBlueSuperminion"] = math.huge ,["SyndraOrbs"] = math.huge ,["LuluKitty"] = math.huge ,["SwainNoBird"] = math.huge ,["LuluLadybug"] = math.huge ,["CaitlynTrap"] = math.huge ,["TT_Shroom_A"] = math.huge ,["ARAMChaosTurretShrine"] = 500.0000 ,["Odin_Windmill_Propellers"] = 500.0000 ,["TT_NWolf2"] = math.huge ,["OdinMinionGraveyardPortal"] = math.huge ,["SwainBeam"] = math.huge ,["Summoner_Rider_Order"] = math.huge ,["TT_Relic"] = math.huge ,["odin_lifts_crystal"] = math.huge ,["OdinOrderTurretShrine"] = 500.0000 ,["SpellBook1"] = 500.0000 ,["Blue_Minion_MechCannon"] = 1200.0000 ,["TT_ChaosInhibitor_D"] = 1200.0000 ,["Odin_SoG_Chaos"] = 1200.0000 ,["TrundleWall"] = 1200.0000 ,["HA_AP_HealthRelic"] = 1200.0000 ,["OrderTurretShrine"] = 500.0000 ,["OriannaBall"] = 500.0000 ,["ChaosTurretShrine"] = 500.0000 ,["LuluCupcake"] = 500.0000 ,["HA_AP_ChaosTurretShrine"] = 500.0000 ,["TT_NWraith2"] = 750.0000 ,["TT_Tree_A"] = 750.0000 ,["SummonerBeacon"] = 750.0000 ,["Odin_Drill"] = 750.0000 ,["TT_NGolem"] = math.huge ,["AramSpeedShrine"] = math.huge ,["OriannaNoBall"] = math.huge ,["Odin_Minecart"] = math.huge ,["Summoner_Rider_Chaos"] = math.huge ,["OdinSpeedShrine"] = math.huge ,["TT_SpeedShrine"] = math.huge ,["odin_lifts_buckets"] = math.huge ,["OdinRockSaw"] = math.huge ,["OdinMinionSpawnPortal"] = math.huge ,["SyndraSphere"] = math.huge ,["Red_Minion_MechMelee"] = math.huge ,["SwainRaven"] = math.huge ,["crystal_platform"] = math.huge ,["MaokaiSproutling"] = math.huge ,["Urf"] = math.huge ,["TestCubeRender10Vision"] = math.huge ,["MalzaharVoidling"] = 500.0000 ,["GhostWard"] = 500.0000 ,["MonkeyKingFlying"] = 500.0000 ,["LuluPig"] = 500.0000 ,["AniviaIceBlock"] = 500.0000 ,["TT_OrderInhibitor_D"] = 500.0000 ,["Odin_SoG_Order"] = 500.0000 ,["RammusDBC"] = 500.0000 ,["FizzShark"] = 500.0000 ,["LuluDragon"] = 500.0000 ,["OdinTestCubeRender"] = 500.0000 ,["TT_Tree1"] = 500.0000 ,["ARAMOrderTurretShrine"] = 500.0000 ,["Odin_Windmill_Gears"] = 500.0000 ,["ARAMChaosNexus"] = 500.0000 ,["TT_NWraith"] = 750.0000 ,["TT_OrderTurret4"] = 500.0000 ,["Odin_SOG_Chaos_Crystal"] = 500.0000 ,["OdinQuestIndicator"] = 500.0000 ,["JarvanIVStandard"] = 500.0000 ,["TT_DummyPusher"] = 500.0000 ,["OdinClaw"] = 500.0000 ,["EliseSpiderling"] = 2000.0000 ,["QuinnValor"] = math.huge ,["UdyrTigerUlt"] = math.huge ,["UdyrTurtleUlt"] = math.huge ,["UdyrUlt"] = math.huge ,["UdyrPhoenixUlt"] = math.huge ,["ShacoBox"] = 1500.0000 ,["HA_AP_Poro"] = 1500.0000 ,["AnnieTibbers"] = math.huge ,["UdyrPhoenix"] = math.huge ,["UdyrTurtle"] = math.huge ,["UdyrTiger"] = math.huge ,["HA_AP_OrderShrineTurret"] = 500.0000 ,["HA_AP_Chains_Long"] = 500.0000 ,["HA_AP_BridgeLaneStatue"] = 500.0000 ,["HA_AP_ChaosTurretRubble"] = 500.0000 ,["HA_AP_PoroSpawner"] = 500.0000 ,["HA_AP_Cutaway"] = 500.0000 ,["HA_AP_Chains"] = 500.0000 ,["ChaosInhibitor_D"] = 500.0000 ,["ZacRebirthBloblet"] = 500.0000 ,["OrderInhibitor_D"] = 500.0000 ,["Nidalee_Spear"] = 500.0000 ,["Nidalee_Cougar"] = 500.0000 ,["TT_Buffplat_Chain"] = 500.0000 ,["WriggleLantern"] = 500.0000 ,["TwistedLizardElder"] = 500.0000 ,["RabidWolf"] = math.huge ,["HeimerTGreen"] = 1599.3999 ,["HeimerTRed"] = 1599.3999 ,["ViktorFF"] = 1599.3999 ,["TwistedGolem"] = math.huge ,["TwistedSmallWolf"] = math.huge ,["TwistedGiantWolf"] = math.huge ,["TwistedTinyWraith"] = 750.0000 ,["TwistedBlueWraith"] = 750.0000 ,["TwistedYoungLizard"] = 750.0000 ,["Red_Minion_Melee"] = math.huge ,["Blue_Minion_Melee"] = math.huge ,["Blue_Minion_Healer"] = 1000.0000 ,["Ghast"] = 750.0000 ,["blueDragon"] = 800.0000 ,["Red_Minion_MechRange"] = 3000, 
             ["SRU_OrderMinionRanged"] = 650, ["SRU_ChaosMinionRanged"] = 650, ["SRU_OrderMinionSiege"] = 1200, ["SRU_ChaosMinionSiege"] = 1200, 
             ["SRUAP_Turret_Chaos1"]  = 1200, ["SRUAP_Turret_Chaos2"]  = 1200, ["SRUAP_Turret_Chaos3"] = 1200, ["SRUAP_Turret_Chaos3_Test"] = 1200, ["SRUAP_Turret_Chaos4"] = 1200, ["SRUAP_Turret_Chaos5"] = 500, 
@@ -1371,6 +1376,7 @@ function _Prediction:__init()
         table.insert(self.PredictionList, "HPrediction") 
         self.Actives["HPrediction"] = true
         self.HP = HPrediction()
+        _G.HP = self.HP
     end
     if VIP_USER and FileExist(LIB_PATH.."DivinePred.lua") and FileExist(LIB_PATH.."DivinePred.luac") then
         require "DivinePred"
@@ -1378,12 +1384,14 @@ function _Prediction:__init()
         self.Actives["DivinePred"] = true
         self.BindedSpells = {}
         self.DP = DivinePred()
+        _G.DP = self.DP
     end
     if FileExist(LIB_PATH.."SPrediction.lua") and FileExist(LIB_PATH.."Collision.lua") then
         require "SPrediction"
         table.insert(self.PredictionList, "SPrediction") 
         self.Actives["SPrediction"] = true
         self.SP = SPrediction()
+        _G.SP = self.SP
     end
     self.LastRequest = 0
     local ImmobileBuffs = {
@@ -1718,12 +1726,14 @@ function _OrbwalkManager:__init()
     if FileExist(LIB_PATH .. "SxOrbWalk.lua") then
         table.insert(self.OrbwalkList, "SxOrbWalk")
     end
-    if FileExist(LIB_PATH .. "SOW.lua") then
-        table.insert(self.OrbwalkList, "SOW")
-    end
-
     if FileExist(LIB_PATH .. "Big Fat Orbwalker.lua") then
         table.insert(self.OrbwalkList, "Big Fat Walk")
+    end
+    if FileExist(LIB_PATH.."Nebelwolfi's Orb Walker.lua") and FileExist(LIB_PATH .. "VPrediction.lua") and FileExist(LIB_PATH .. "HPrediction.lua") then
+        table.insert(self.OrbwalkList, "NOW")
+    end
+    if FileExist(LIB_PATH .. "SOW.lua") and FileExist(LIB_PATH .. "VPrediction.lua") then
+        table.insert(self.OrbwalkList, "SOW")
     end
     self.NoAttacks = { 
         jarvanivcataclysmattack = true, 
@@ -1817,7 +1827,7 @@ function _OrbwalkManager:__init()
     DelayAction(
         function()
             self.KeyMan:RegisterKeys()
-        end, 15)
+        end, 20)
 
     AddCreateObjCallback(
         function(obj)
@@ -1887,10 +1897,11 @@ function _OrbwalkManager:LoadCommonKeys(m)
     end
     self.KeysMenu = menu
     if self.KeysMenu ~= nil then
-        self:AddKey({ Name = "Combo", Text = "Combo", Type = SCRIPT_PARAM_ONKEYDOWN, Key = 32, Mode = ORBWALK_MODE.COMBO})
-        self:AddKey({ Name = "Harass", Text = "Harass", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("C"), Mode = ORBWALK_MODE.HARASS})
-        self:AddKey({ Name = "Clear", Text = "LaneClear or JungleClear", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("V"), Mode = ORBWALK_MODE.CLEAR })
-        self:AddKey({ Name = "LastHit", Text = "LastHit", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("X"), Mode = ORBWALK_MODE.LASTHIT})
+        self.KeysMenu:addParam("info", "Common Keys are connected to your Orbwalker", SCRIPT_PARAM_INFO, "")
+        --self:AddKey({ Name = "Combo", Text = "Combo", Type = SCRIPT_PARAM_ONKEYDOWN, Key = 32, Mode = ORBWALK_MODE.COMBO})
+        --self:AddKey({ Name = "Harass", Text = "Harass", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("C"), Mode = ORBWALK_MODE.HARASS})
+        --self:AddKey({ Name = "Clear", Text = "LaneClear or JungleClear", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("V"), Mode = ORBWALK_MODE.CLEAR })
+        --self:AddKey({ Name = "LastHit", Text = "LastHit", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("X"), Mode = ORBWALK_MODE.LASTHIT})
     end
 end
 
@@ -2017,16 +2028,16 @@ end
 
 --boring part
 function _OrbwalkManager:ShouldWait()
-    if self.EnemyMinions ~= nil and Prediction.VP then
+    if self.EnemyMinions ~= nil and _G.VP then
         self.EnemyMinions:update()
         if #self.EnemyMinions.objects > 0 and self:CanAttack() then
             for i, minion in pairs(self.EnemyMinions.objects) do
                 if self:InRange(minion) and not minion.dead then
                     local delay = _G.SpellManagerMenu ~= nil and _G.SpellManagerMenu.FarmDelay ~= nil and _G.SpellManagerMenu.FarmDelay or 0
-                    local ProjectileSpeed = Prediction.VP:GetProjectileSpeed(myHero)
+                    local ProjectileSpeed = _G.VP:GetProjectileSpeed(myHero)
                     local time = self:WindUpTime() + GetDistance(myHero.pos, minion.pos) / ProjectileSpeed + ExtraTime()
-                    local predHealth = Prediction.VP:GetPredictedHealth(minion, time, delay)
-                    local damage = Prediction.VP:CalcDamageOfAttack(myHero, minion, {name = "Basic"}, 0)
+                    local predHealth = _G.VP:GetPredictedHealth(minion, time, delay)
+                    local damage = _G.VP:CalcDamageOfAttack(myHero, minion, {name = "Basic"}, 0)
                     if predHealth > 0 then
                         if damage > predHealth * 0.9 and predHealth < minion.health then
                             return true
@@ -2034,7 +2045,7 @@ function _OrbwalkManager:ShouldWait()
                             --[[
                             time = self:AnimationTime() + GetDistance(myHero.pos, minion.pos) / ProjectileSpeed + ExtraTime()
                             time = time * 2
-                            predHealth = Prediction.VP:GetPredictedHealth2(minion, time)
+                            predHealth = _G.VP:GetPredictedHealth2(minion, time)
                             if damage > predHealth and predHealth < minion.health then
                                 return true
                             end]]
@@ -2133,30 +2144,45 @@ function _OrbwalkManager:OrbLoad()
         if _G.Reborn_Loaded and not _G.Reborn_Initialised then
             DelayAction(function() self:OrbLoad() end, 1)
         end
-        if self:GetOrbwalkSelected() == "MMA" then
-            self.OrbLoaded = self:GetOrbwalkSelected()
-            self:EnableMovement()
-            self:EnableAttacks()
-        elseif self:GetOrbwalkSelected() == "SxOrbWalk" then
-            require 'SxOrbWalk'
-            self.OrbLoaded = self:GetOrbwalkSelected()
-            SxOrb:LoadToMenu()
-            self:EnableMovement()
-            self:EnableAttacks()
-        elseif self:GetOrbwalkSelected() == "SOW" then
-            require 'SOW'
-            self.OrbLoaded = self:GetOrbwalkSelected()
-            if Prediction.VP then
-                SOWi = SOW(Prediction.VP)
+        if self.Loaded == nil then
+            self.Loaded = true
+            if self:GetOrbwalkSelected() == "MMA" then
+                self.OrbLoaded = self:GetOrbwalkSelected()
+                self:EnableMovement()
+                self:EnableAttacks()
+            elseif self:GetOrbwalkSelected() == "SxOrbWalk" then
+                if _G.SxOrb == nil then
+                    require 'SxOrbWalk'
+                    self.OrbLoaded = self:GetOrbwalkSelected()
+                    _G.SxOrb:LoadToMenu()
+                    self:EnableMovement()
+                    self:EnableAttacks()
+                end
+            elseif self:GetOrbwalkSelected() == "SOW" then
+                if _G.SOWi == nil then
+                    require 'SOW'
+                    self.OrbLoaded = self:GetOrbwalkSelected()
+                    if _G.VP then
+                        _G.SOWi = SOW(_G.VP)
+                    end
+                    _G.SOWi:LoadToMenu()
+                    self:EnableMovement()
+                    self:EnableAttacks()
+                end
+            elseif self:GetOrbwalkSelected() == "Big Fat Walk" then
+                require "Big Fat Orbwalker"
+                self.OrbLoaded = self:GetOrbwalkSelected()
+                self:EnableMovement()
+                self:EnableAttacks()
+            elseif self:GetOrbwalkSelected() == "NOW" then
+                if _G.NOWi == nil then
+                    require "Nebelwolfi's Orb Walker"
+                    _G.NOWi = NebelwolfisOrbWalker()
+                    self.OrbLoaded = self:GetOrbwalkSelected()
+                    self:EnableMovement()
+                    self:EnableAttacks()
+                end
             end
-            SOWi:LoadToMenu()
-            self:EnableMovement()
-            self:EnableAttacks()
-        elseif self:GetOrbwalkSelected() == "Big Fat Walk" then
-            require "Big Fat Orbwalker"
-            self.OrbLoaded = self:GetOrbwalkSelected()
-            self:EnableMovement()
-            self:EnableAttacks()
         end
     else
         PrintMessage("You will need an orbwalker")
@@ -2193,9 +2219,11 @@ function _OrbwalkManager:ResetAA()
     if self.OrbLoaded == "AutoCarry" then
         _G.AutoCarry.Orbwalker:ResetAttackTimer()
     elseif self.OrbLoaded == "SxOrbWalk" then
-        SxOrb:ResetAA()
+        _G.SxOrb:ResetAA()
     elseif self.OrbLoaded == "SOW" then
-        SOWi:resetAA()
+        _G.SOWi:resetAA()
+    elseif self.OrbLoaded == "NOW" then
+        _G.NOWi.orbTable.lastAA = os.clock() - GetLatency() / 2000 - _G.NOWi.orbTable.animation
     end
 end
 
@@ -2205,16 +2233,19 @@ function _OrbwalkManager:DisableMovement()
             _G.AutoCarry.MyHero:MovementEnabled(false)
             self.Move = false
         elseif self.OrbLoaded == "SxOrbWalk" then
-            SxOrb:DisableMove()
+            _G.SxOrb:DisableMove()
             self.Move = false
         elseif self.OrbLoaded == "SOW" then
-            SOWi.Move = false
+            _G.SOWi.Move = false
             self.Move = false
         elseif self.OrbLoaded == "Big Fat Walk" then
             _G["BigFatOrb_DisableMove"] = true
             self.Move = false
         elseif self.OrbLoaded == "MMA" then
             _G.MMA_AvoidMovement(true)
+            self.Move = false
+        elseif self.OrbLoaded == "NOW" then
+            _G.NOWi:SetMove(false)
             self.Move = false
         end
     end
@@ -2226,16 +2257,19 @@ function _OrbwalkManager:EnableMovement()
             _G.AutoCarry.MyHero:MovementEnabled(true)
             self.Move = true
         elseif self.OrbLoaded == "SxOrbWalk" then
-            SxOrb:EnableMove()
+            _G.SxOrb:EnableMove()
             self.Move = true
         elseif self.OrbLoaded == "SOW" then
-            SOWi.Move = true
+            _G.SOWi.Move = true
             self.Move = true
         elseif self.OrbLoaded == "Big Fat Walk" then
             _G["BigFatOrb_DisableMove"] = false
             self.Move = true
         elseif self.OrbLoaded == "MMA" then
             _G.MMA_AvoidMovement(false)
+            self.Move = true
+        elseif self.OrbLoaded == "NOW" then
+            _G.NOWi:SetMove(true)
             self.Move = true
         end
     end
@@ -2247,16 +2281,19 @@ function _OrbwalkManager:DisableAttacks()
             _G.AutoCarry.MyHero:AttacksEnabled(false)
             self.Attack = false
         elseif self.OrbLoaded == "SxOrbWalk" then
-            SxOrb:DisableAttacks()
+            _G.SxOrb:DisableAttacks()
             self.Attack = false
         elseif self.OrbLoaded == "SOW" then
-            SOWi.Attacks = false
+            _G.SOWi.Attacks = false
             self.Attack = false
         elseif self.OrbLoaded == "Big Fat Walk" then
             _G["BigFatOrb_DisableAttacks"] = true
             self.Attack = false
         elseif self.OrbLoaded == "MMA" then
             _G.MMA_StopAttacks(true)
+            self.Attack = false
+        elseif self.OrbLoaded == "NOW" then
+            _G.NOWi:SetAA(false)
             self.Attack = false
         end
     end
@@ -2268,16 +2305,19 @@ function _OrbwalkManager:EnableAttacks()
             _G.AutoCarry.MyHero:AttacksEnabled(true)
             self.Attack = true
         elseif self.OrbLoaded == "SxOrbWalk" then
-            SxOrb:EnableAttacks()
+            _G.SxOrb:EnableAttacks()
             self.Attack = true
         elseif self.OrbLoaded == "SOW" then
-            SOWi.Attacks = true
+            _G.SOWi.Attacks = true
             self.Attack = true
         elseif self.OrbLoaded == "Big Fat Walk" then
             _G["BigFatOrb_DisableAttacks"] = false
             self.Attack = true
         elseif self.OrbLoaded == "MMA" then
             _G.MMA_StopAttacks(false)
+            self.Attack = true
+        elseif self.OrbLoaded == "NOW" then
+            _G.NOWi:SetAA(true)
             self.Attack = true
         end
     end
@@ -2805,12 +2845,127 @@ function _KeyManager:IsKeyPressed(list)
     end
     return false
 end
+function _KeyManager:IsComboPressed()
+    if OrbwalkManager.OrbLoaded == "AutoCarry" then
+        if _G.AutoCarry.Keys.AutoCarry then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
+        if _G.SxOrb.isFight then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "SOW" then
+        if _G.SOWi.Menu.Mode0 then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "MMA" then
+        if _G.MMA_IsOrbwalking then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
+        if _G["BigFatOrb_Mode"] == "Combo" then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "NOW" then
+        if _G.NOWi.Config.k.Combo then
+            return true
+        end
+    end
+    return self:IsKeyPressed(self.ComboKeys)
+end
+
+function _KeyManager:IsHarassPressed()
+    if OrbwalkManager.OrbLoaded == "AutoCarry" then
+        if _G.AutoCarry.Keys.MixedMode then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
+        if _G.SxOrb.isHarass then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "SOW" then
+        if _G.SOWi.Menu.Mode1 then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "MMA" then
+        if _G.MMA_IsHybrid then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
+        if _G["BigFatOrb_Mode"] == "Harass" then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "NOW" then
+        if _G.NOWi.Config.k.Harass then
+            return true
+        end
+    end
+    return self:IsKeyPressed(self.HarassKeys)
+end
+
+function _KeyManager:IsClearPressed()
+    if OrbwalkManager.OrbLoaded == "AutoCarry" then
+        if _G.AutoCarry.Keys.LaneClear then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
+        if _G.SxOrb.isLaneClear then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "SOW" then
+        if _G.SOWi.Menu.Mode2 then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "MMA" then
+        if _G.MMA_IsClearing then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
+        if _G["BigFatOrb_Mode"] == "LaneClear" then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "NOW" then
+        if _G.NOWi.Config.k.LaneClear then
+            return true
+        end
+    end
+    return self:IsKeyPressed(self.ClearKeys)
+end
+
+function _KeyManager:IsLastHitPressed()
+    if OrbwalkManager.OrbLoaded == "AutoCarry" then
+        if _G.AutoCarry.Keys.LastHit then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
+        if _G.SxOrb.isLastHit then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "SOW" then
+        if _G.SOWi.Menu.Mode3 then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "MMA" then
+        if _G.MMA_IsLasthitting then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
+        if _G["BigFatOrb_Mode"] == "LastHit" then
+            return true
+        end
+    elseif OrbwalkManager.OrbLoaded == "NOW" then
+        if _G.NOWi.Config.k.LastHit then
+            return true
+        end
+    end
+    return self:IsKeyPressed(self.LastHitKeys)
+end
 
 function _KeyManager:OnTick()
-    self.Combo      = self:IsKeyPressed(self.ComboKeys)
-    self.Harass     = self:IsKeyPressed(self.HarassKeys)
-    self.LastHit    = self:IsKeyPressed(self.LastHitKeys)
-    self.Clear      = self:IsKeyPressed(self.ClearKeys)
+    self.Combo      = self:IsComboPressed()
+    self.Harass     = self:IsHarassPressed()
+    self.LastHit    = self:IsLastHitPressed()
+    self.Clear      = self:IsClearPressed()
 end
 
 function _KeyManager:RegisterKey(menu, param, mode)
@@ -2837,7 +2992,7 @@ function _KeyManager:RegisterKeys()
                     if OrbwalkManager.OrbLoaded == "AutoCarry" then
                         _G.AutoCarry.Keys:RegisterMenuKey(menu, param, AutoCarry.MODE_AUTOCARRY)
                     elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
-                        SxOrb:RegisterHotKey("fight",  menu, param)
+                        _G.SxOrb:RegisterHotKey("fight",  menu, param)
                     end
                 end
             end
@@ -2854,7 +3009,7 @@ function _KeyManager:RegisterKeys()
                     if OrbwalkManager.OrbLoaded == "AutoCarry" then
                         _G.AutoCarry.Keys:RegisterMenuKey(menu, param, AutoCarry.MODE_MIXEDMODE)
                     elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
-                        SxOrb:RegisterHotKey("harass", menu, param)
+                        _G.SxOrb:RegisterHotKey("harass", menu, param)
                     end
                 end
             end
@@ -2871,7 +3026,7 @@ function _KeyManager:RegisterKeys()
                     if OrbwalkManager.OrbLoaded == "AutoCarry" then
                         _G.AutoCarry.Keys:RegisterMenuKey(menu, param, AutoCarry.MODE_LANECLEAR)
                     elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
-                        SxOrb:RegisterHotKey("laneclear", menu, param)
+                        _G.SxOrb:RegisterHotKey("laneclear", menu, param)
                     end
                 end
             end
@@ -2888,7 +3043,7 @@ function _KeyManager:RegisterKeys()
                     if OrbwalkManager.OrbLoaded == "AutoCarry" then
                         _G.AutoCarry.Keys:RegisterMenuKey(menu, param, AutoCarry.MODE_LASTHIT)
                     elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
-                        SxOrb:RegisterHotKey("lasthit", menu, param)
+                        _G.SxOrb:RegisterHotKey("lasthit", menu, param)
                     end
                 end
             end
