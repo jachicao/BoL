@@ -647,19 +647,12 @@ function _SpellManager:InitMenu()
             _G.SpellManagerMenu:addParam("Exploit", "Enable No-Face Exploit", SCRIPT_PARAM_ONOFF, false)
         end
         _G.SpellManagerMenu:addParam("DisableDraws", "Disable All Draws", SCRIPT_PARAM_ONOFF, false)
-    end
-end
-
-function _SpellManager:AddPrediction()
-    if _G.SpellManagerMenu ~= nil then
-        if _G.SpellManagerMenu.PredictionSelected == nil then
-            local tab = {" "}
-            for i, name in ipairs(Prediction.PredictionList) do
-                table.insert(tab, name)
-            end
-            _G.SpellManagerMenu:addParam("PredictionSelected", "Set All Skillshots to: ", SCRIPT_PARAM_LIST, 1, tab)
-            self:LoadTickCallback()
+        local tab = {" "}
+        for i, name in ipairs(Prediction.PredictionList) do
+            table.insert(tab, name)
         end
+        _G.SpellManagerMenu:addParam("PredictionSelected", "Set All Skillshots to: ", SCRIPT_PARAM_LIST, 1, tab)
+        self:LoadTickCallback()
     end
 end
 
@@ -730,7 +723,6 @@ function _Spell:__init(tab)
         self.IsVeryLowAccuracy = tab.IsVeryLowAccuracy
         if self:IsSkillShot() then
             self:AddToMenu()
-            SpellManager:AddPrediction()
             if self.Menu ~= nil then
                 self.Menu:addParam("PredictionSelected", "Prediction Selection", SCRIPT_PARAM_LIST, 1, Prediction.PredictionList)
                 self.Menu:addParam("Combo", "X % Combo Accuracy", SCRIPT_PARAM_SLICE, 60, 0, 100)
