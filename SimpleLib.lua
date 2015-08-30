@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.03
+_G.SimpleLibVersion = 1.04
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -291,7 +291,7 @@ end
 
 function FindItemSlot(name)
     for slot = ITEM_1, ITEM_7 do
-        if myHero:CanUseSpell(slot) == READY and myHero:GetSpellData(slot) ~= nil and myHero:GetSpellData(slot).name ~= nil and myHero:GetSpellData(slot).name:lower():find(name:lower()) then
+        if myHero:CanUseSpell(slot) == READY and myHero:GetSpellData(slot) ~= nil and myHero:GetSpellData(slot).name ~= nil and ( myHero:GetSpellData(slot).name:lower():find(name:lower()) or name:lower():find(myHero:GetSpellData(slot).name:lower()) ) then
             return slot
         end
     end
@@ -300,7 +300,7 @@ end
 
 function FindSummonerSlot(name)
     for slot = SUMMONER_1, SUMMONER_2 do
-        if myHero:GetSpellData(slot)  ~= nil and myHero:GetSpellData(slot).name  ~= nil and myHero:GetSpellData(slot).name:lower():find(name:lower()) then
+        if myHero:GetSpellData(slot)  ~= nil and myHero:GetSpellData(slot).name  ~= nil and ( myHero:GetSpellData(slot).name:lower():find(name:lower()) or name:lower():find(myHero:GetSpellData(slot).name:lower()) ) then
             return slot
         end
     end
@@ -902,11 +902,7 @@ end
 
 function _Spell:GetPrediction(target, t)
     local range = t ~= nil and t.Range ~= nil and t.Range or self.Range
-    local temp = self.Range
-    self.Range = range
-    local boolean = self:ValidTarget(target)
-    self.Range = temp
-    if boolean then
+    if self:ValidTarget(target, range) then
         if self:IsSkillShot() then
             local pred = t ~= nil and t.TypeOfPrediction ~= nil and t.TypeOfPrediction or self:PredictionSelected()
             local accuracy = t ~= nil and t.Accuracy ~= nil and t.Accuracy or self:GetAccuracy()
@@ -1046,10 +1042,11 @@ function _Spell:PredictionSelected()
     return Prediction.PredictionList[int] ~= nil and tostring(Prediction.PredictionList[int]) or "VPrediction"
 end
 
-function _Spell:ValidTarget(target)
+function _Spell:ValidTarget(target, range)
     local source = self.DrawSourceFunction ~= nil and self.DrawSource or self.Source
     local extrarange = self:IsCircular() and self.Width or 0
-    return IsValidTarget(target, math.huge, self.IsForEnemies) and GetDistanceSqr(source, target) <= math.pow(self.Range + extrarange, 2)
+    local range = range ~= nil and range or self.Range
+    return IsValidTarget(target, math.huge, self.IsForEnemies) and GetDistanceSqr(source, target) <= math.pow(range + extrarange, 2)
 end
 
 function _Spell:ObjectsInArea(objects)
@@ -1897,7 +1894,7 @@ function _OrbwalkManager:LoadCommonKeys(m)
     end
     self.KeysMenu = menu
     if self.KeysMenu ~= nil then
-        self.KeysMenu:addParam("info", "Common Keys are connected to your Orbwalker", SCRIPT_PARAM_INFO, "")
+        self.KeysMenu:addParam("info", "Common Keys are connected with your Orbwalker", SCRIPT_PARAM_INFO, "")
         --self:AddKey({ Name = "Combo", Text = "Combo", Type = SCRIPT_PARAM_ONKEYDOWN, Key = 32, Mode = ORBWALK_MODE.COMBO})
         --self:AddKey({ Name = "Harass", Text = "Harass", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("C"), Mode = ORBWALK_MODE.HARASS})
         --self:AddKey({ Name = "Clear", Text = "LaneClear or JungleClear", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("V"), Mode = ORBWALK_MODE.CLEAR })
@@ -2185,7 +2182,7 @@ function _OrbwalkManager:OrbLoad()
             end
         end
     else
-        PrintMessage("You will need an orbwalker")
+        _Required():Add({Name = "SxOrbWalk", Url = "raw.githubusercontent.com/Superx321/BoL/master/common/SxOrbWalk.lua"}):Check()
     end
 end
 
@@ -3068,6 +3065,7 @@ function _Required:Add(t)
     local extension = t.Extension ~= nil and t.Extension or "lua"
     local usehttps = t.UseHttps ~= nil and t.UseHttps or true
     table.insert(self.requirements, {Name = name, Url = url, Extension = extension, UseHttps = usehttps})
+    return self
 end
 
 function _Required:Check()
@@ -3100,6 +3098,7 @@ function _Required:Check()
             end
         end
     end
+    return self
 end
 
 function _Required:CheckDownloads()
@@ -3114,7 +3113,8 @@ function _Required:CheckDownloads()
             end
         end
         DelayAction(function() self:CheckDownloads() end, 2) 
-    end 
+    end
+    return self
 end
 
 function _Required:IsDownloading()
@@ -3456,10 +3456,7 @@ if _G.SimpleLibLoaded == nil then
     CircleManager = _CircleManager()
     AutoSmite = _AutoSmite()
     OrbwalkManager = _OrbwalkManager()
-    local r = _Required()
-    r:Add({Name = "VPrediction", Url = "raw.githubusercontent.com/SidaBoL/Scripts/master/Common/VPrediction.lua"})
-    r:Check()
-    if r:IsDownloading() then return end
+    if _Required():Add({Name = "VPrediction", Url = "raw.githubusercontent.com/SidaBoL/Scripts/master/Common/VPrediction.lua"}):Check():IsDownloading() then return end
     DelayAction(function() CheckUpdate() end, 5)
     YasuoWall = nil
     for i, enemy in ipairs(GetEnemyHeroes()) do
