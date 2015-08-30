@@ -642,17 +642,11 @@ end
 function _SpellManager:InitMenu()
     if _G.SpellManagerMenu == nil then
         _G.SpellManagerMenu = scriptConfig("SimpleLib - Spell Manager", "SpellManager".."19052015"..myHero.charName)
-        _G.SpellManagerMenu:addParam("DisableDraws", "Disable All Draws", SCRIPT_PARAM_ONOFF, false)
         if VIP_USER then
             _G.SpellManagerMenu:addParam("Packet", "Enable Packets", SCRIPT_PARAM_ONOFF, false)
             _G.SpellManagerMenu:addParam("Exploit", "Enable No-Face Exploit", SCRIPT_PARAM_ONOFF, false)
         end
-        local tab = {" "}
-        for i, name in ipairs(Prediction.PredictionList) do
-            table.insert(tab, name)
-        end
-        _G.SpellManagerMenu:addParam("PredictionSelected", "Set All Skillshots to: ", SCRIPT_PARAM_LIST, 1, tab)
-        self:LoadTickCallback()
+        _G.SpellManagerMenu:addParam("DisableDraws", "Disable All Draws", SCRIPT_PARAM_ONOFF, false)
     end
 end
 
