@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.05
+_G.SimpleLibVersion = 1.06
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1702,24 +1702,37 @@ end
 function _OrbwalkManager:__init()
     self.OrbLoaded = ""
     self.OrbwalkList = {}
-    if _G.Reborn_Loaded or _G.Reborn_Initialised or _G.AutoCarry ~= nil then
-        table.insert(self.OrbwalkList, "AutoCarry")
-    end
-    if _G.MMA_IsLoaded then
-        table.insert(self.OrbwalkList, "MMA")
-    end
-    if FileExist(LIB_PATH .. "SxOrbWalk.lua") then
-        table.insert(self.OrbwalkList, "SxOrbWalk")
-    end
-    if FileExist(LIB_PATH .. "Big Fat Orbwalker.lua") then
-        table.insert(self.OrbwalkList, "Big Fat Walk")
-    end
-    if FileExist(LIB_PATH.."Nebelwolfi's Orb Walker.lua") and FileExist(LIB_PATH .. "VPrediction.lua") and FileExist(LIB_PATH .. "HPrediction.lua") then
-        table.insert(self.OrbwalkList, "NOW")
-    end
-    if FileExist(LIB_PATH .. "SOW.lua") and FileExist(LIB_PATH .. "VPrediction.lua") then
-        table.insert(self.OrbwalkList, "SOW")
-    end
+    self.KeyMan = _KeyManager()
+    DelayAction(function()
+        if _G.Reborn_Loaded or _G.Reborn_Initialised or _G.AutoCarry ~= nil then
+            table.insert(self.OrbwalkList, "AutoCarry")
+        end
+        if _G.MMA_IsLoaded then
+            table.insert(self.OrbwalkList, "MMA")
+        end
+        if FileExist(LIB_PATH .. "SxOrbWalk.lua") then
+            table.insert(self.OrbwalkList, "SxOrbWalk")
+        end
+        if FileExist(LIB_PATH .. "Big Fat Orbwalker.lua") then
+            table.insert(self.OrbwalkList, "Big Fat Walk")
+        end
+        if FileExist(LIB_PATH.."Nebelwolfi's Orb Walker.lua") and FileExist(LIB_PATH .. "VPrediction.lua") and FileExist(LIB_PATH .. "HPrediction.lua") then
+            table.insert(self.OrbwalkList, "NOW")
+        end
+        if FileExist(LIB_PATH .. "SOW.lua") and FileExist(LIB_PATH .. "VPrediction.lua") then
+            table.insert(self.OrbwalkList, "SOW")
+        end
+        if _G.OrbwalkManagerMenu == nil then
+            _G.OrbwalkManagerMenu = scriptConfig("SimpleLib - Orbwalk Manager", "OrbwalkManager".."24052015"..myHero.charName)
+        end
+        if #self.OrbwalkList > 0 then
+            _G.OrbwalkManagerMenu:addParam("OrbwalkerSelected", "Orbwalker Selection", SCRIPT_PARAM_LIST, 1, self.OrbwalkList)
+            if #self.OrbwalkList > 1 then
+                _G.OrbwalkManagerMenu:addParam("info", "Requires 2x F9 when changing selection", SCRIPT_PARAM_INFO, "")
+            end
+        end
+        DelayAction(function() self:OrbLoad() end, 1)
+    end, 1)
     self.NoAttacks = { 
         jarvanivcataclysmattack = true, 
         monkeykingdoubleattack = true, 
@@ -1791,28 +1804,12 @@ function _OrbwalkManager:__init()
     self.BaseWindUpTime = 3
     self.BaseAnimationTime = 0.665
     self.Mode = ORBWALK_MODE.NONE
-    self.KeyMan = _KeyManager()
     self.AfterAttackCallbacks = {}
     self.LastAnimationName = ""
     self.AA = {LastTime = 0, LastTarget = nil, IsAttacking = false, Object = nil}
     
     self.EnemyMinions = minionManager(MINION_ENEMY, myHero.range + myHero.boundingRadius + 500, myHero, MINION_SORT_HEALTH_ASC)
     self.JungleMinions = minionManager(MINION_JUNGLE, myHero.range + myHero.boundingRadius + 500, myHero, MINION_SORT_MAXHEALTH_DEC)
-
-    if _G.OrbwalkManagerMenu == nil then
-        _G.OrbwalkManagerMenu = scriptConfig("SimpleLib - Orbwalk Manager", "OrbwalkManager".."24052015"..myHero.charName)
-    end
-    if #self.OrbwalkList > 0 then
-        _G.OrbwalkManagerMenu:addParam("OrbwalkerSelected", "Orbwalker Selection", SCRIPT_PARAM_LIST, 1, self.OrbwalkList)
-        if #self.OrbwalkList > 1 then
-            _G.OrbwalkManagerMenu:addParam("info", "Requires 2x F9 when changing selection", SCRIPT_PARAM_INFO, "")
-        end
-    end
-    DelayAction(function() self:OrbLoad() end, 1)
-    DelayAction(
-        function()
-            self.KeyMan:RegisterKeys()
-        end, 20)
 
     AddCreateObjCallback(
         function(obj)
@@ -2119,6 +2116,7 @@ function _OrbwalkManager:OrbLoad()
                 self.OrbLoaded = self:GetOrbwalkSelected()
                 self:EnableMovement()
                 self:EnableAttacks()
+                self.KeyMan:RegisterKeys()
                 return
             else
                 _G.AutoCarry.MyHero:MovementEnabled(false)
@@ -2142,6 +2140,7 @@ function _OrbwalkManager:OrbLoad()
                     _G.SxOrb:LoadToMenu()
                     self:EnableMovement()
                     self:EnableAttacks()
+                    self.KeyMan:RegisterKeys()
                 end
             elseif self:GetOrbwalkSelected() == "SOW" then
                 if _G.SOWi == nil then
