@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.11
+_G.SimpleLibVersion = 1.12
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1723,11 +1723,11 @@ function _OrbwalkManager:__init()
         if FileExist(LIB_PATH .. "SxOrbWalk.lua") then
             table.insert(self.OrbwalkList, "SxOrbWalk")
         end
-        if FileExist(LIB_PATH .. "Big Fat Orbwalker.lua") then
-            table.insert(self.OrbwalkList, "Big Fat Walk")
-        end
         if FileExist(LIB_PATH.."Nebelwolfi's Orb Walker.lua") and FileExist(LIB_PATH .. "VPrediction.lua") and FileExist(LIB_PATH .. "HPrediction.lua") then
             table.insert(self.OrbwalkList, "NOW")
+        end
+        if FileExist(LIB_PATH .. "Big Fat Orbwalker.lua") then
+            table.insert(self.OrbwalkList, "Big Fat Walk")
         end
         if FileExist(LIB_PATH .. "SOW.lua") and FileExist(LIB_PATH .. "VPrediction.lua") then
             table.insert(self.OrbwalkList, "SOW")
@@ -2163,6 +2163,9 @@ function _OrbwalkManager:OrbLoad()
                         _G.SOWi = SOW(_G.VP)
                     end
                     _G.SOWi:LoadToMenu()
+                    if AddProcessAttackCallback then
+                        AddProcessAttackCallback(function(unit, spell) _G.SOWi:OnProcessSpell(unit, spell) end)
+                    end
                     self:EnableMovement()
                     self:EnableAttacks()
                 end
