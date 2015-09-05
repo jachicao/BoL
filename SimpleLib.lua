@@ -1899,7 +1899,7 @@ function _OrbwalkManager:LoadCommonKeys(m)
             self:AddKey({ Name = "Clear", Text = "LaneClear or JungleClear", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("V"), Mode = ORBWALK_MODE.CLEAR })
             self:AddKey({ Name = "LastHit", Text = "LastHit", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("X"), Mode = ORBWALK_MODE.LASTHIT})
         else
-            self.KeysMenu:addParam("info", "Requires 2x F9 to load custom keys", SCRIPT_PARAM_INFO, "")
+            self.KeysMenu:addParam("info", "Requires 2x F9 to load custom common keys", SCRIPT_PARAM_INFO, "")
         end
     end
 end
