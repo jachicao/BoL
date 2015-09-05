@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.13
+_G.SimpleLibVersion = 1.14
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1892,11 +1892,15 @@ function _OrbwalkManager:LoadCommonKeys(m)
     end
     self.KeysMenu = menu
     if self.KeysMenu ~= nil then
-        self.KeysMenu:addParam("info", "Common Keys are connected with your Orbwalker", SCRIPT_PARAM_INFO, "")
-        --self:AddKey({ Name = "Combo", Text = "Combo", Type = SCRIPT_PARAM_ONKEYDOWN, Key = 32, Mode = ORBWALK_MODE.COMBO})
-        --self:AddKey({ Name = "Harass", Text = "Harass", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("C"), Mode = ORBWALK_MODE.HARASS})
-        --self:AddKey({ Name = "Clear", Text = "LaneClear or JungleClear", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("V"), Mode = ORBWALK_MODE.CLEAR })
-        --self:AddKey({ Name = "LastHit", Text = "LastHit", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("X"), Mode = ORBWALK_MODE.LASTHIT})
+        self.KeysMenu:addParam("Common", "Use Common keys from your Orbwalker", SCRIPT_PARAM_ONOFF, true)
+        if not self.KeysMenu.Common then
+            self:AddKey({ Name = "Combo", Text = "Combo", Type = SCRIPT_PARAM_ONKEYDOWN, Key = 32, Mode = ORBWALK_MODE.COMBO})
+            self:AddKey({ Name = "Harass", Text = "Harass", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("C"), Mode = ORBWALK_MODE.HARASS})
+            self:AddKey({ Name = "Clear", Text = "LaneClear or JungleClear", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("V"), Mode = ORBWALK_MODE.CLEAR })
+            self:AddKey({ Name = "LastHit", Text = "LastHit", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("X"), Mode = ORBWALK_MODE.LASTHIT})
+        else
+            self.KeysMenu:addParam("info", "Requires 2x F9 to load custom keys", SCRIPT_PARAM_INFO, "")
+        end
     end
 end
 
@@ -2854,116 +2858,124 @@ function _KeyManager:IsKeyPressed(list)
     return false
 end
 function _KeyManager:IsComboPressed()
-    if OrbwalkManager.OrbLoaded == "AutoCarry" then
-        if _G.AutoCarry.Keys.AutoCarry then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
-        if _G.SxOrb.isFight then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "SOW" then
-        if _G.SOWi.Menu.Mode0 then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "MMA" then
-        if _G.MMA_IsOrbwalking then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
-        if _G["BigFatOrb_Mode"] == "Combo" then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "NOW" then
-        if _G.NOWi.Config.k.Combo then
-            return true
+    if OrbwalkManager.KeysMenu and OrbwalkManager.KeysMenu.Common then
+        if OrbwalkManager.OrbLoaded == "AutoCarry" then
+            if _G.AutoCarry.Keys.AutoCarry then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
+            if _G.SxOrb.isFight then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "SOW" then
+            if _G.SOWi.Menu.Mode0 then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "MMA" then
+            if _G.MMA_IsOrbwalking then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
+            if _G["BigFatOrb_Mode"] == "Combo" then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "NOW" then
+            if _G.NOWi.Config.k.Combo then
+                return true
+            end
         end
     end
     return self:IsKeyPressed(self.ComboKeys)
 end
 
 function _KeyManager:IsHarassPressed()
-    if OrbwalkManager.OrbLoaded == "AutoCarry" then
-        if _G.AutoCarry.Keys.MixedMode then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
-        if _G.SxOrb.isHarass then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "SOW" then
-        if _G.SOWi.Menu.Mode1 then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "MMA" then
-        if _G.MMA_IsHybrid then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
-        if _G["BigFatOrb_Mode"] == "Harass" then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "NOW" then
-        if _G.NOWi.Config.k.Harass then
-            return true
+    if OrbwalkManager.KeysMenu and OrbwalkManager.KeysMenu.Common then
+        if OrbwalkManager.OrbLoaded == "AutoCarry" then
+            if _G.AutoCarry.Keys.MixedMode then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
+            if _G.SxOrb.isHarass then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "SOW" then
+            if _G.SOWi.Menu.Mode1 then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "MMA" then
+            if _G.MMA_IsHybrid then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
+            if _G["BigFatOrb_Mode"] == "Harass" then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "NOW" then
+            if _G.NOWi.Config.k.Harass then
+                return true
+            end
         end
     end
     return self:IsKeyPressed(self.HarassKeys)
 end
 
 function _KeyManager:IsClearPressed()
-    if OrbwalkManager.OrbLoaded == "AutoCarry" then
-        if _G.AutoCarry.Keys.LaneClear then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
-        if _G.SxOrb.isLaneClear then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "SOW" then
-        if _G.SOWi.Menu.Mode2 then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "MMA" then
-        if _G.MMA_IsClearing then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
-        if _G["BigFatOrb_Mode"] == "LaneClear" then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "NOW" then
-        if _G.NOWi.Config.k.LaneClear then
-            return true
+    if OrbwalkManager.KeysMenu and OrbwalkManager.KeysMenu.Common then
+        if OrbwalkManager.OrbLoaded == "AutoCarry" then
+            if _G.AutoCarry.Keys.LaneClear then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
+            if _G.SxOrb.isLaneClear then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "SOW" then
+            if _G.SOWi.Menu.Mode2 then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "MMA" then
+            if _G.MMA_IsClearing then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
+            if _G["BigFatOrb_Mode"] == "LaneClear" then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "NOW" then
+            if _G.NOWi.Config.k.LaneClear then
+                return true
+            end
         end
     end
     return self:IsKeyPressed(self.ClearKeys)
 end
 
 function _KeyManager:IsLastHitPressed()
-    if OrbwalkManager.OrbLoaded == "AutoCarry" then
-        if _G.AutoCarry.Keys.LastHit then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
-        if _G.SxOrb.isLastHit then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "SOW" then
-        if _G.SOWi.Menu.Mode3 then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "MMA" then
-        if _G.MMA_IsLasthitting then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
-        if _G["BigFatOrb_Mode"] == "LastHit" then
-            return true
-        end
-    elseif OrbwalkManager.OrbLoaded == "NOW" then
-        if _G.NOWi.Config.k.LastHit then
-            return true
+    if OrbwalkManager.KeysMenu and OrbwalkManager.KeysMenu.Common then
+        if OrbwalkManager.OrbLoaded == "AutoCarry" then
+            if _G.AutoCarry.Keys.LastHit then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
+            if _G.SxOrb.isLastHit then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "SOW" then
+            if _G.SOWi.Menu.Mode3 then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "MMA" then
+            if _G.MMA_IsLasthitting then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
+            if _G["BigFatOrb_Mode"] == "LastHit" then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "NOW" then
+            if _G.NOWi.Config.k.LastHit then
+                return true
+            end
         end
     end
     return self:IsKeyPressed(self.LastHitKeys)
