@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.14
+_G.SimpleLibVersion = 1.15
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -652,7 +652,21 @@ function _SpellManager:InitMenu()
             table.insert(tab, name)
         end
         _G.SpellManagerMenu:addParam("PredictionSelected", "Set All Skillshots to: ", SCRIPT_PARAM_LIST, 1, tab)
-        self:LoadTickCallback()
+        _G.SpellManagerMenu.PredictionSelected = 1
+        _G.SpellManagerMenu:setCallback("PredictionSelected",
+            function(v)
+                if v and v ~= 1 then
+                    --print(tostring(_G.SpellManagerMenu._param[_G.SpellManagerMenu:getParamIndex("PredictionSelected")].listTable[v]))
+                    for i, spell in ipairs(self.spells) do
+                        if spell.Menu ~= nil then
+                            if spell.Menu.PredictionSelected ~= nil then
+                                spell.Menu.PredictionSelected = _G.SpellManagerMenu.PredictionSelected -1
+                            end
+                        end
+                    end
+                end
+            end
+            )
     end
 end
 
@@ -661,28 +675,6 @@ function _SpellManager:AddLastHit()
         if not _G.SpellManagerMenu.FarmDelay then
             _G.SpellManagerMenu:addParam("FarmDelay", "Delay for LastHit (in ms)", SCRIPT_PARAM_SLICE, 0, -150, 150)
         end
-    end
-end
-
-function _SpellManager:LoadTickCallback()
-    if not self.TickCallback then
-        self.TickCallback = true
-        AddTickCallback(
-            function()
-                if _G.SpellManagerMenu ~= nil then
-                    if _G.SpellManagerMenu.PredictionSelected ~= nil and _G.SpellManagerMenu.PredictionSelected ~= 1 then
-                        for i, spell in ipairs(self.spells) do
-                            if spell.Menu ~= nil then
-                                if spell.Menu.PredictionSelected ~= nil then
-                                    spell.Menu.PredictionSelected = _G.SpellManagerMenu.PredictionSelected -1
-                                end
-                            end
-                        end
-                        _G.SpellManagerMenu.PredictionSelected = 1
-                    end
-                end
-            end
-        )
     end
 end
 
@@ -1737,8 +1729,26 @@ function _OrbwalkManager:__init()
         end
         if #self.OrbwalkList > 0 then
             _G.OrbwalkManagerMenu:addParam("OrbwalkerSelected", "Orbwalker Selection", SCRIPT_PARAM_LIST, 1, self.OrbwalkList)
+            local default = _G.OrbwalkManagerMenu.OrbwalkerSelected
             if #self.OrbwalkList > 1 then
-                _G.OrbwalkManagerMenu:addParam("info", "Requires 2x F9 when changing selection", SCRIPT_PARAM_INFO, "")
+                --_G.OrbwalkManagerMenu:addParam("info", "Requires 2x F9 when changing selection", SCRIPT_PARAM_INFO, "")
+                _G.OrbwalkManagerMenu:setCallback("OrbwalkerSelected",
+                    function(v)
+                        if v and v ~= default then
+                            if not self.Draw then
+                                self.Draw = true
+                                AddDrawCallback(
+                                    function()
+                                        local p = WorldToScreen(D3DXVECTOR3(myHero.x, myHero.y, myHero.z))
+                                        if OnScreen(p.x, p.y) and _G.OrbwalkManagerMenu.OrbwalkerSelected ~= default then
+                                            DrawText("Press 2x F9!", 25, p.x, p.y, ARGB(255, 255, 255, 255))
+                                        end
+                                    end
+                                )
+                            end
+                        end
+                    end
+                    )
             end
         end
         DelayAction(function() self:OrbLoad() end, 1)
@@ -1892,15 +1902,57 @@ function _OrbwalkManager:LoadCommonKeys(m)
     end
     self.KeysMenu = menu
     if self.KeysMenu ~= nil then
-        self.KeysMenu:addParam("Common", "Use Common keys from your Orbwalker", SCRIPT_PARAM_ONOFF, true)
-        if not self.KeysMenu.Common then
-            self:AddKey({ Name = "Combo", Text = "Combo", Type = SCRIPT_PARAM_ONKEYDOWN, Key = 32, Mode = ORBWALK_MODE.COMBO})
-            self:AddKey({ Name = "Harass", Text = "Harass", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("C"), Mode = ORBWALK_MODE.HARASS})
-            self:AddKey({ Name = "Clear", Text = "LaneClear or JungleClear", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("V"), Mode = ORBWALK_MODE.CLEAR })
-            self:AddKey({ Name = "LastHit", Text = "LastHit", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("X"), Mode = ORBWALK_MODE.LASTHIT})
-        else
-            self.KeysMenu:addParam("info", "Requires 2x F9 to load custom common keys", SCRIPT_PARAM_INFO, "")
+        self.KeysMenu:addParam("Common", "Use main keys from your Orbwalker", SCRIPT_PARAM_ONOFF, true)
+        local default = self.KeysMenu.Common
+        if default == false then
+            AddTickCallback(
+                function()
+                    if self.OrbLoaded == self:GetOrbwalkSelected() and not self.Registered then
+                        self:AddKey({ Name = "Combo", Text = "Combo", Type = SCRIPT_PARAM_ONKEYDOWN, Key = 32, Mode = ORBWALK_MODE.COMBO})
+                        self:AddKey({ Name = "Harass", Text = "Harass", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("C"), Mode = ORBWALK_MODE.HARASS})
+                        self:AddKey({ Name = "Clear", Text = "LaneClear or JungleClear", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("V"), Mode = ORBWALK_MODE.CLEAR })
+                        self:AddKey({ Name = "LastHit", Text = "LastHit", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("X"), Mode = ORBWALK_MODE.LASTHIT})
+                        if not self.Registered then
+                            self.KeyMan:RegisterKeys()
+                            self.Registered = true
+                        end
+                    end
+                end
+            )
         end
+         self.KeysMenu:setCallback("Common",
+            function(v)
+                if v == false and not self.Added then
+                    self.Added = true
+                    self:AddKey({ Name = "Combo", Text = "Combo", Type = SCRIPT_PARAM_ONKEYDOWN, Key = 32, Mode = ORBWALK_MODE.COMBO})
+                    self:AddKey({ Name = "Harass", Text = "Harass", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("C"), Mode = ORBWALK_MODE.HARASS})
+                    self:AddKey({ Name = "Clear", Text = "LaneClear or JungleClear", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("V"), Mode = ORBWALK_MODE.CLEAR })
+                    self:AddKey({ Name = "LastHit", Text = "LastHit", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("X"), Mode = ORBWALK_MODE.LASTHIT})
+                    if not Registered then
+                        AddTickCallback(
+                            function()
+                                if self.OrbLoaded == self:GetOrbwalkSelected() then
+                                    if not self.Registered then
+                                        self.KeyMan:RegisterKeys()
+                                        self.Registered = true
+                                    end
+                                end
+                            end
+                        )
+                    end
+                elseif v == true and self.Added then
+                    self.KeysMenu:removeParam("Combo")
+                    self.KeysMenu:removeParam("Combo".."TypeList")
+                    self.KeysMenu:removeParam("Harass")
+                    self.KeysMenu:removeParam("Harass".."TypeList")
+                    self.KeysMenu:removeParam("Clear")
+                    self.KeysMenu:removeParam("Clear".."TypeList")
+                    self.KeysMenu:removeParam("LastHit")
+                    self.KeysMenu:removeParam("LastHit".."TypeList")
+                    self.Added = false
+                end
+            end
+        )
     end
 end
 
@@ -2133,7 +2185,6 @@ function _OrbwalkManager:OrbLoad()
                 self.OrbLoaded = self:GetOrbwalkSelected()
                 self:EnableMovement()
                 self:EnableAttacks()
-                self.KeyMan:RegisterKeys()
                 return
             else
                 _G.AutoCarry.MyHero:MovementEnabled(false)
@@ -2157,7 +2208,6 @@ function _OrbwalkManager:OrbLoad()
                     _G.SxOrb:LoadToMenu()
                     self:EnableMovement()
                     self:EnableAttacks()
-                    self.KeyMan:RegisterKeys()
                 end
             elseif self:GetOrbwalkSelected() == "SOW" then
                 if _G.SOWi == nil then
@@ -2206,7 +2256,7 @@ function _OrbwalkManager:AddKey(t)
         local mode = t.Mode 
         assert(mode and type(mode) == "number", "OrbwalkManager: AddKey Mode is invalid!")
 
-        self.KeysMenu:addParam(name, text, tipo, false, key)
+        self.KeysMenu:addDynamicParam(name, text, tipo, false, key)
         self.KeysMenu[name] = false
         self.KeyMan:RegisterKey(self.KeysMenu, name, mode)
     end
@@ -2844,11 +2894,10 @@ function _KeyManager:IsKeyPressed(list)
         for i = 1, #list do
             if list[i] then
                 local key = list[i]
-
                 if #key > 0 then
                     local menu = key[1]
                     local param = key[2]
-                    if menu[param] then
+                    if menu and param and menu[param] then
                         return true
                     end
                 end
