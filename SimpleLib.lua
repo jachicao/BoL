@@ -2278,6 +2278,8 @@ function _OrbwalkManager:ResetAA()
         _G.SOWi:resetAA()
     elseif self.OrbLoaded == "NOW" then
         _G.NOWi.orbTable.lastAA = os.clock() - GetLatency() / 2000 - _G.NOWi.orbTable.animation
+    elseif self.OrbLoaded == "MMA" then
+        _G.MMA_ResetAutoAttack()
     end
 end
 
@@ -2921,7 +2923,7 @@ function _KeyManager:IsComboPressed()
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "MMA" then
-            if _G.MMA_IsOrbwalking then
+            if _G.MMA_IsOrbwalking() == true then
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
@@ -2952,7 +2954,7 @@ function _KeyManager:IsHarassPressed()
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "MMA" then
-            if _G.MMA_IsHybrid then
+            if _G.MMA_IsHybrid() == true then
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
@@ -2983,7 +2985,7 @@ function _KeyManager:IsClearPressed()
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "MMA" then
-            if _G.MMA_IsClearing then
+            if _G.MMA_IsClearing() == true then
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
@@ -3014,7 +3016,7 @@ function _KeyManager:IsLastHitPressed()
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "MMA" then
-            if _G.MMA_IsLasthitting then
+            if _G.MMA_IsLasthitting() == true then
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
@@ -3058,10 +3060,17 @@ function _KeyManager:RegisterKeys()
                 if #key > 0 then
                     local menu = key[1]
                     local param = key[2]
-                    if OrbwalkManager.OrbLoaded == "AutoCarry" then
-                        _G.AutoCarry.Keys:RegisterMenuKey(menu, param, AutoCarry.MODE_AUTOCARRY)
-                    elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
-                        _G.SxOrb:RegisterHotKey("fight",  menu, param)
+                    --menu._param[menu:getParamIndex(param)].listTable[v]
+                    if menu and param then
+                        if OrbwalkManager.OrbLoaded == "AutoCarry" then
+                            _G.AutoCarry.Keys:RegisterMenuKey(menu, param, AutoCarry.MODE_AUTOCARRY)
+                        elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
+                            _G.SxOrb:RegisterHotKey("fight",  menu, param)
+                        elseif OrbwalkManager.OrbLoaded == "MMA" then
+                            if menu._param[menu:getParamIndex(param)].key then
+                                _G.MMA_AddKey(menu._param[menu:getParamIndex(param)].key, 'Orbwalking', menu._param[menu:getParamIndex(param)].pType)
+                            end
+                        end
                     end
                 end
             end
@@ -3075,10 +3084,16 @@ function _KeyManager:RegisterKeys()
                 if #key > 0 then
                     local menu = key[1]
                     local param = key[2]
-                    if OrbwalkManager.OrbLoaded == "AutoCarry" then
-                        _G.AutoCarry.Keys:RegisterMenuKey(menu, param, AutoCarry.MODE_MIXEDMODE)
-                    elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
-                        _G.SxOrb:RegisterHotKey("harass", menu, param)
+                    if menu and param then
+                        if OrbwalkManager.OrbLoaded == "AutoCarry" then
+                            _G.AutoCarry.Keys:RegisterMenuKey(menu, param, AutoCarry.MODE_MIXEDMODE)
+                        elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
+                            _G.SxOrb:RegisterHotKey("harass", menu, param)
+                        elseif OrbwalkManager.OrbLoaded == "MMA" then
+                            if menu._param[menu:getParamIndex(param)].key then
+                                _G.MMA_AddKey(menu._param[menu:getParamIndex(param)].key, 'Orbwalking', menu._param[menu:getParamIndex(param)].pType)
+                            end
+                        end
                     end
                 end
             end
@@ -3092,10 +3107,16 @@ function _KeyManager:RegisterKeys()
                 if #key > 0 then
                     local menu = key[1]
                     local param = key[2]
-                    if OrbwalkManager.OrbLoaded == "AutoCarry" then
-                        _G.AutoCarry.Keys:RegisterMenuKey(menu, param, AutoCarry.MODE_LANECLEAR)
-                    elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
-                        _G.SxOrb:RegisterHotKey("laneclear", menu, param)
+                    if menu and param then
+                        if OrbwalkManager.OrbLoaded == "AutoCarry" then
+                            _G.AutoCarry.Keys:RegisterMenuKey(menu, param, AutoCarry.MODE_LANECLEAR)
+                        elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
+                            _G.SxOrb:RegisterHotKey("laneclear", menu, param)
+                        elseif OrbwalkManager.OrbLoaded == "MMA" then
+                            if menu._param[menu:getParamIndex(param)].key then
+                                _G.MMA_AddKey(menu._param[menu:getParamIndex(param)].key, 'Laneclearing', menu._param[menu:getParamIndex(param)].pType)
+                            end
+                        end
                     end
                 end
             end
@@ -3109,10 +3130,16 @@ function _KeyManager:RegisterKeys()
                 if #key > 0 then
                     local menu = key[1]
                     local param = key[2]
-                    if OrbwalkManager.OrbLoaded == "AutoCarry" then
-                        _G.AutoCarry.Keys:RegisterMenuKey(menu, param, AutoCarry.MODE_LASTHIT)
-                    elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
-                        _G.SxOrb:RegisterHotKey("lasthit", menu, param)
+                    if menu and param then
+                        if OrbwalkManager.OrbLoaded == "AutoCarry" then
+                            _G.AutoCarry.Keys:RegisterMenuKey(menu, param, AutoCarry.MODE_LASTHIT)
+                        elseif OrbwalkManager.OrbLoaded == "SxOrbWalk" then
+                            _G.SxOrb:RegisterHotKey("lasthit", menu, param)
+                        elseif OrbwalkManager.OrbLoaded == "MMA" then
+                            if menu._param[menu:getParamIndex(param)].key then
+                                _G.MMA_AddKey(menu._param[menu:getParamIndex(param)].key, 'Lasthitting', menu._param[menu:getParamIndex(param)].pType)
+                            end
+                        end
                     end
                 end
             end
