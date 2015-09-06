@@ -1876,6 +1876,7 @@ function _OrbwalkManager:__init()
             if self.OrbLoaded == self:GetOrbwalkSelected() then
                 if self.RegisterCommon and not self.Registered2 then
                     self.Registered2 = true
+                    self.Added = true
                     self:AddKey({ Name = "Combo", Text = "Combo", Type = SCRIPT_PARAM_ONKEYDOWN, Key = 32, Mode = ORBWALK_MODE.COMBO})
                     self:AddKey({ Name = "Harass", Text = "Harass", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("C"), Mode = ORBWALK_MODE.HARASS})
                     self:AddKey({ Name = "Clear", Text = "LaneClear or JungleClear", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("V"), Mode = ORBWALK_MODE.CLEAR })
