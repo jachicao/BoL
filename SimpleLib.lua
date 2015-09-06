@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.15
+_G.SimpleLibVersion = 1.16
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1873,6 +1873,20 @@ function _OrbwalkManager:__init()
                     if self.GotReset then self.GotReset = false end
                 end
             end
+            if self.OrbLoaded == self:GetOrbwalkSelected() then
+                if self.RegisterCommon and not self.Registered2 then
+                    self.Registered2 = true
+                    self:AddKey({ Name = "Combo", Text = "Combo", Type = SCRIPT_PARAM_ONKEYDOWN, Key = 32, Mode = ORBWALK_MODE.COMBO})
+                    self:AddKey({ Name = "Harass", Text = "Harass", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("C"), Mode = ORBWALK_MODE.HARASS})
+                    self:AddKey({ Name = "Clear", Text = "LaneClear or JungleClear", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("V"), Mode = ORBWALK_MODE.CLEAR })
+                    self:AddKey({ Name = "LastHit", Text = "LastHit", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("X"), Mode = ORBWALK_MODE.LASTHIT})
+                    self.KeyMan:RegisterKeys()
+                end
+                if not self.Registered then
+                    self.Registered = true
+                    self.KeyMan:RegisterKeys()
+                end
+            end
         end
     )
 end
@@ -1903,23 +1917,7 @@ function _OrbwalkManager:LoadCommonKeys(m)
     self.KeysMenu = menu
     if self.KeysMenu ~= nil then
         self.KeysMenu:addParam("Common", "Use main keys from your Orbwalker", SCRIPT_PARAM_ONOFF, true)
-        local default = self.KeysMenu.Common
-        if default == false then
-            AddTickCallback(
-                function()
-                    if self.OrbLoaded == self:GetOrbwalkSelected() and not self.Registered then
-                        self:AddKey({ Name = "Combo", Text = "Combo", Type = SCRIPT_PARAM_ONKEYDOWN, Key = 32, Mode = ORBWALK_MODE.COMBO})
-                        self:AddKey({ Name = "Harass", Text = "Harass", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("C"), Mode = ORBWALK_MODE.HARASS})
-                        self:AddKey({ Name = "Clear", Text = "LaneClear or JungleClear", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("V"), Mode = ORBWALK_MODE.CLEAR })
-                        self:AddKey({ Name = "LastHit", Text = "LastHit", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("X"), Mode = ORBWALK_MODE.LASTHIT})
-                        if not self.Registered then
-                            self.KeyMan:RegisterKeys()
-                            self.Registered = true
-                        end
-                    end
-                end
-            )
-        end
+        self.RegisterCommon = self.KeysMenu.Common == false
          self.KeysMenu:setCallback("Common",
             function(v)
                 if v == false and not self.Added then
@@ -1928,13 +1926,13 @@ function _OrbwalkManager:LoadCommonKeys(m)
                     self:AddKey({ Name = "Harass", Text = "Harass", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("C"), Mode = ORBWALK_MODE.HARASS})
                     self:AddKey({ Name = "Clear", Text = "LaneClear or JungleClear", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("V"), Mode = ORBWALK_MODE.CLEAR })
                     self:AddKey({ Name = "LastHit", Text = "LastHit", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("X"), Mode = ORBWALK_MODE.LASTHIT})
-                    if not Registered then
+                    if not self.Registered2 then
                         AddTickCallback(
                             function()
                                 if self.OrbLoaded == self:GetOrbwalkSelected() then
-                                    if not self.Registered then
+                                    if not self.Registered2 then
+                                        self.Registered2 = true
                                         self.KeyMan:RegisterKeys()
-                                        self.Registered = true
                                     end
                                 end
                             end
@@ -2923,7 +2921,7 @@ function _KeyManager:IsComboPressed()
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "MMA" then
-            if _G.MMA_IsOrbwalking() == true then
+            if _G.MMA_IsOrbwalking() then
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
@@ -2954,7 +2952,7 @@ function _KeyManager:IsHarassPressed()
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "MMA" then
-            if _G.MMA_IsHybrid() == true then
+            if _G.MMA_IsHybrid() then
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
@@ -2985,7 +2983,7 @@ function _KeyManager:IsClearPressed()
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "MMA" then
-            if _G.MMA_IsClearing() == true then
+            if _G.MMA_IsClearing() then
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
@@ -3016,7 +3014,7 @@ function _KeyManager:IsLastHitPressed()
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "MMA" then
-            if _G.MMA_IsLasthitting() == true then
+            if _G.MMA_IsLasthitting() then
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
