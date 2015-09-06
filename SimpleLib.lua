@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.17
+_G.SimpleLibVersion = 1.18
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -3347,7 +3347,7 @@ function _SimpleTargetSelector:__init(mode, range, damageType)
     self.target = nil
     self.range = range
     self.Menu = nil
-    self.multiplier = 1.4
+    self.multiplier = 1.2
     self.selected = nil
     AddTickCallback(function() self:update() end)
     AddMsgCallback(
