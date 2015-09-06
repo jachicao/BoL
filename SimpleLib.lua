@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.16
+_G.SimpleLibVersion = 1.17
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1827,6 +1827,7 @@ function _OrbwalkManager:__init()
     self.AfterAttackCallbacks = {}
     self.LastAnimationName = ""
     self.AA = {LastTime = 0, LastTarget = nil, IsAttacking = false, Object = nil}
+    self.LastKeyAdded = os.clock()
     
     self.EnemyMinions = minionManager(MINION_ENEMY, myHero.range + myHero.boundingRadius + 500, myHero, MINION_SORT_HEALTH_ASC)
     self.JungleMinions = minionManager(MINION_JUNGLE, myHero.range + myHero.boundingRadius + 500, myHero, MINION_SORT_MAXHEALTH_DEC)
@@ -1874,17 +1875,16 @@ function _OrbwalkManager:__init()
                 end
             end
             if self.OrbLoaded == self:GetOrbwalkSelected() then
-                if self.RegisterCommon and not self.Registered2 then
-                    self.Registered2 = true
-                    self.Added = true
+                if self.RegisterCommon and not self.RegisteredCommon then
+                    self.RegisteredCommon = true
+                    self.AddedCommon = true
                     self:AddKey({ Name = "Combo", Text = "Combo", Type = SCRIPT_PARAM_ONKEYDOWN, Key = 32, Mode = ORBWALK_MODE.COMBO})
                     self:AddKey({ Name = "Harass", Text = "Harass", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("C"), Mode = ORBWALK_MODE.HARASS})
                     self:AddKey({ Name = "Clear", Text = "LaneClear or JungleClear", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("V"), Mode = ORBWALK_MODE.CLEAR })
                     self:AddKey({ Name = "LastHit", Text = "LastHit", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("X"), Mode = ORBWALK_MODE.LASTHIT})
-                    self.KeyMan:RegisterKeys()
                 end
-                if not self.Registered then
-                    self.Registered = true
+                if self.Register and os.clock() - self.LastKeyAdded > 0.15 then
+                    self.Register = false
                     self.KeyMan:RegisterKeys()
                 end
             end
@@ -1921,12 +1921,13 @@ function _OrbwalkManager:LoadCommonKeys(m)
         self.RegisterCommon = self.KeysMenu.Common == false
          self.KeysMenu:setCallback("Common",
             function(v)
-                if v == false and not self.Added then
-                    self.Added = true
-                    self:AddKey({ Name = "Combo", Text = "Combo", Type = SCRIPT_PARAM_ONKEYDOWN, Key = 32, Mode = ORBWALK_MODE.COMBO})
+                if v == false and not self.AddedCommon then
+                    self.AddedCommon = true
+                    self:AddKey({ Name = "Combo", Text = "Combo (Space)", Type = SCRIPT_PARAM_ONKEYDOWN, Key = 32, Mode = ORBWALK_MODE.COMBO})
                     self:AddKey({ Name = "Harass", Text = "Harass", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("C"), Mode = ORBWALK_MODE.HARASS})
                     self:AddKey({ Name = "Clear", Text = "LaneClear or JungleClear", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("V"), Mode = ORBWALK_MODE.CLEAR })
                     self:AddKey({ Name = "LastHit", Text = "LastHit", Type = SCRIPT_PARAM_ONKEYDOWN, Key = string.byte("X"), Mode = ORBWALK_MODE.LASTHIT})
+                    --[[
                     if not self.Registered2 then
                         AddTickCallback(
                             function()
@@ -1939,7 +1940,8 @@ function _OrbwalkManager:LoadCommonKeys(m)
                             end
                         )
                     end
-                elseif v == true and self.Added then
+                    ]]
+                elseif v == true and self.AddedCommon then
                     self.KeysMenu:removeParam("Combo")
                     self.KeysMenu:removeParam("Combo".."TypeList")
                     self.KeysMenu:removeParam("Harass")
@@ -1948,7 +1950,7 @@ function _OrbwalkManager:LoadCommonKeys(m)
                     self.KeysMenu:removeParam("Clear".."TypeList")
                     self.KeysMenu:removeParam("LastHit")
                     self.KeysMenu:removeParam("LastHit".."TypeList")
-                    self.Added = false
+                    self.AddedCommon = false
                 end
             end
         )
@@ -2258,6 +2260,8 @@ function _OrbwalkManager:AddKey(t)
         self.KeysMenu:addDynamicParam(name, text, tipo, false, key)
         self.KeysMenu[name] = false
         self.KeyMan:RegisterKey(self.KeysMenu, name, mode)
+        self.Register = true
+        self.LastKeyAdded = os.clock()
     end
 end
 
