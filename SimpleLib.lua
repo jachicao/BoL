@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.18
+_G.SimpleLibVersion = 1.19
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -947,7 +947,7 @@ function _Spell:LoadCreateAndDeleteCallback()
     if not self.ObjectCallback then
         AddCreateObjCallback(
             function(obj)
-                if obj and obj.name and self.Object == nil and os.clock() - self.LastCastTime > self.Delay * 0.8 and os.clock() - self.LastCastTime < self.Delay * 1.2 and ( (obj.spellOwner and obj.spellOwner.isMe) or GetDistanceSqr(self.Source, obj) < 10 * 10) then
+                if obj and obj.name and self.Object == nil and obj.name:lower():find("missile") and os.clock() - self.LastCastTime > self.Delay * 0.8 and os.clock() - self.LastCastTime < self.Delay * 1.2 and ( (obj.spellOwner and obj.spellOwner.isMe) or GetDistanceSqr(self.Source, obj) < 10 * 10) then
                     for _, s in ipairs(self.TrackObject) do
                         if obj.name:lower():find(s:lower()) then
                             self.Object = obj
@@ -958,7 +958,7 @@ function _Spell:LoadCreateAndDeleteCallback()
         )
         AddDeleteObjCallback(
             function(obj)
-                if obj and obj.name and self.Object ~= nil and GetDistanceSqr(obj, self.Object) < math.pow(10, 2) then
+                if obj and obj.name and self.Object ~= nil and obj.name:lower():find("missile") and GetDistanceSqr(obj, self.Object) < math.pow(10, 2) then
                     for _, s in ipairs(self.TrackObject) do
                         if obj.name:lower():find(s:lower()) then
                             self.Object = nil
@@ -2033,20 +2033,20 @@ function _OrbwalkManager:InRange(target, off)
 end
 
 function _OrbwalkManager:IsCombo()
-    return self.Mode == ORBWALK_MODE.COMBO
+    return self.KeyMan.Combo
 end
 function _OrbwalkManager:IsHarass()
-    return self.Mode == ORBWALK_MODE.HARASS
+    return self.KeyMan.Harass
 end
 function _OrbwalkManager:IsClear()
-    return self.Mode == ORBWALK_MODE.CLEAR
+    return self.KeyMan.Clear
 end
 function _OrbwalkManager:IsLastHit()
-    return self.Mode == ORBWALK_MODE.LASTHIT
+    return self.KeyMan.LastHit
 end
 
 function _OrbwalkManager:IsNone()
-    return self.Mode == ORBWALK_MODE.NONE
+    return not (self:IsCombo() or self:IsHarass() or self:IsClear() or self:IsLastHit())
 end
 
 function _OrbwalkManager:TakeControl()
