@@ -3616,7 +3616,7 @@ if _G.SimpleLibLoaded == nil then
     AutoSmite = _AutoSmite()
     OrbwalkManager = _OrbwalkManager()
     if _Required():Add({Name = "VPrediction", Url = "raw.githubusercontent.com/SidaBoL/Scripts/master/Common/VPrediction.lua"}):Check():IsDownloading() then return end
-    DelayAction(function() CheckUpdate() end, 5)
+    DelayAction(function() CheckUpdate() end, 1)
     YasuoWall = nil
     for i, enemy in ipairs(GetEnemyHeroes()) do
         EnemiesInGame[enemy.charName] = true
