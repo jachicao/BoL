@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.20
+_G.SimpleLibVersion = 1.21
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -28,179 +28,217 @@ class "_AutoSmite"
 class "_SimpleTargetSelector"
 
 local CHANELLING_SPELLS = {
-    ["Caitlyn"]                     = "R",
-    ["Katarina"]                    = "R",
-    ["MasterYi"]                    = "W",
-    ["Fiddlesticks"]                = "R",
-    ["Galio"]                       = "R",
-    ["Lucian"]                      = "R",
-    ["MissFortune"]                 = "R",
-    ["VelKoz"]                      = "R",
-    ["Nunu"]                        = "R",
-    ["Shen"]                        = "R",
-    ["Karthus"]                     = "R",
-    ["Malzahar"]                    = "R",
-    ["Pantheon"]                    = "R",
-    ["Warwick"]                     = "R",
-    ["Xerath"]                      = "R",
+    ["Caitlyn"]                     = { "R" },
+    ["Katarina"]                    = { "R" },
+    ["MasterYi"]                    = { "W" },
+    ["Fiddlesticks"]                = { "R" },
+    ["Galio"]                       = { "R" },
+    ["Lucian"]                      = { "R" },
+    ["MissFortune"]                 = { "R" },
+    ["VelKoz"]                      = { "R" },
+    ["Nunu"]                        = { "R" },
+    ["Shen"]                        = { "R" },
+    ["Karthus"]                     = { "R" },
+    ["Malzahar"]                    = { "R" },
+    ["Pantheon"]                    = { "R" },
+    ["Warwick"]                     = { "R" },
+    ["Xerath"]                      = { "R" },
 }
 
 local GAPCLOSER_SPELLS = {
-    ["Aatrox"]                      = "Q",
-    ["Akali"]                       = "R",
-    ["Alistar"]                     = "W",
-    ["Amumu"]                       = "Q",
-    ["Corki"]                       = "W",
-    ["Diana"]                       = "R",
-    ["Elise"]                       = "Q",
-    ["Elise"]                       = "E",
-    ["Fiddlesticks"]                = "R",
-    ["Fiora"]                       = "Q",
-    ["Fizz"]                        = "Q",
-    ["Gnar"]                        = "E",
-    ["Gragas"]                      = "E",
-    ["Graves"]                      = "E",
-    ["Hecarim"]                     = "R",
-    ["Irelia"]                      = "Q",
-    ["JarvanIV"]                    = "Q",
-    ["JarvanIV"]                    = "R",
-    ["Jax"]                         = "Q",
-    ["Jayce"]                       = "Q",
-    ["Katarina"]                    = "E",
-    ["Kassadin"]                    = "R",
-    ["Kennen"]                      = "E",
-    ["KhaZix"]                      = "E",
-    ["Lissandra"]                   = "E",
-    ["LeBlanc"]                     = "W",
-    ["LeBlanc"]                     = "R",
-    ["LeeSin"]                      = "Q",
-    ["Leona"]                       = "E",
-    ["Lucian"]                      = "E",
-    ["Malphite"]                    = "R",
-    ["MasterYi"]                    = "Q",
-    ["MonkeyKing"]                  = "E",
-    ["Nautilus"]                    = "Q",
-    ["Nocturne"]                    = "R",
-    ["Olaf"]                        = "R",
-    ["Pantheon"]                    = "W",
-    ["Pantheon"]                    = "R",
-    ["Poppy"]                       = "E",
-    ["RekSai"]                      = "E",
-    ["Renekton"]                    = "E",
-    ["Riven"]                       = "Q",
-    ["Riven"]                       = "E",
-    ["Rengar"]                      = "R",
-    ["Sejuani"]                     = "Q",
-    ["Sion"]                        = "R",
-    ["Shen"]                        = "E",
-    ["Shyvana"]                     = "R",
-    ["Talon"]                       = "E",
-    ["Thresh"]                      = "Q",
-    ["Tristana"]                    = "W",
-    ["Tryndamere"]                  = "E",
-    ["Udyr"]                        = "E",
-    ["Volibear"]                    = "Q",
-    ["Vi"]                          = "Q",
-    ["XinZhao"]                     = "E",
-    ["Yasuo"]                       = "E",
-    ["Zac"]                         = "E",
-    ["Ziggs"]                       = "W",
+    ["Aatrox"]                      = { "Q" },
+    ["Akali"]                       = { "R" },
+    ["Alistar"]                     = { "W" },
+    ["Amumu"]                       = { "Q" },
+    ["Caitlyn"]                     = { "E" },
+    ["Corki"]                       = { "W" },
+    ["Diana"]                       = { "R" },
+    ["Ezreal"]                       = { "E" },
+    ["Elise"]                       = { "Q", "E" },
+    ["Fiddlesticks"]                = { "R" },
+    ["Fiora"]                       = { "Q" },
+    ["Fizz"]                        = { "Q" },
+    ["Gnar"]                        = { "E" },
+    ["Gragas"]                      = { "E" },
+    ["Graves"]                      = { "E" },
+    ["Hecarim"]                     = { "R" },
+    ["Irelia"]                      = { "Q" },
+    ["JarvanIV"]                    = { "Q", "R" },
+    ["Jax"]                         = { "Q" },
+    ["Jayce"]                       = { "Q" },
+    ["Katarina"]                    = { "E" },
+    ["Kassadin"]                    = { "R" },
+    ["Kennen"]                      = { "E" },
+    ["KhaZix"]                      = { "E" },
+    ["Lissandra"]                   = { "E" },
+    ["LeBlanc"]                     = { "W" , "R"},
+    ["LeeSin"]                      = { "Q" },
+    ["Leona"]                       = { "E" },
+    ["Lucian"]                      = { "E" },
+    ["Malphite"]                    = { "R" },
+    ["MasterYi"]                    = { "Q" },
+    ["MonkeyKing"]                  = { "E" },
+    ["Nautilus"]                    = { "Q" },
+    ["Nocturne"]                    = { "R" },
+    ["Olaf"]                        = { "R" },
+    ["Pantheon"]                    = { "W" , "R"},
+    ["Poppy"]                       = { "E" },
+    ["RekSai"]                      = { "E" },
+    ["Renekton"]                    = { "E" },
+    ["Riven"]                       = { "Q", "E"},
+    ["Rengar"]                      = { "R" },
+    ["Sejuani"]                     = { "Q" },
+    ["Sion"]                        = { "R" },
+    ["Shen"]                        = { "E" },
+    ["Shyvana"]                     = { "R" },
+    ["Talon"]                       = { "E" },
+    ["Thresh"]                      = { "Q" },
+    ["Tristana"]                    = { "W" },
+    ["Tryndamere"]                  = { "E" },
+    ["Udyr"]                        = { "E" },
+    ["Volibear"]                    = { "Q" },
+    ["Vi"]                          = { "Q" },
+    ["XinZhao"]                     = { "E" },
+    ["Yasuo"]                       = { "E" },
+    ["Zac"]                         = { "E" },
+    ["Ziggs"]                       = { "W" },
 }
 
 local CC_SPELLS = {
-    ["Ahri"]                        = "E",
-    ["Amumu"]                       = "Q",
-    ["Amumu"]                       = "R",
-    ["Anivia"]                      = "Q",
-    ["Annie"]                       = "R",
-    ["Ashe"]                        = "R",
-    ["Bard"]                        = "Q",
-    ["Blitzcrank"]                  = "Q",
-    ["Brand"]                       = "Q",
-    ["Braum"]                       = "Q",
-    ["Cassiopeia"]                  = "R",
-    ["Darius"]                      = "E",
-    ["Draven"]                      = "E",
-    ["DrMundo"]                     = "Q",
-    ["Ekko"]                        = "W",
-    ["Elise"]                       = "E",
-    ["Evelynn"]                     = "R",
-    ["Ezreal"]                      = "R",
-    ["Fizz"]                        = "R",
-    ["Galio"]                       = "R",
-    ["Gnar"]                        = "R",
-    ["Gragas"]                      = "R",
-    ["Graves"]                      = "R",
-    ["Jinx"]                        = "W",
-    ["Jinx"]                        = "R",
-    ["KhaZix"]                      = "W",
-    ["Leblanc"]                     = "E",
-    ["LeeSin"]                      = "Q",
-    ["Leona"]                       = "E",
-    ["Leona"]                       = "R",
-    ["Lux"]                         = "Q",
-    ["Lux"]                         = "R",
-    ["Malphite"]                    = "R",
-    ["Morgana"]                     = "Q",
-    ["Nami"]                        = "Q",
-    ["Nautilus"]                    = "Q",
-    ["Nidalee"]                     = "Q",
-    ["Orianna"]                     = "R",
-    ["Rengar"]                      = "E",
-    ["Riven"]                       = "R",
-    ["Sejuani"]                     = "R",
-    ["Sion"]                        = "E",
-    ["Shen"]                        = "E",
-    --["Shyvana"]                     = "R",
-    ["Sona"]                        = "R",
-    ["Swain"]                       = "W",
-    ["Thresh"]                      = "Q",
-    ["Varus"]                       = "R",
-    ["Veigar"]                      = "E",
-    ["Vi"]                          = "Q",
-    ["Xerath"]                      = "E",
-    ["Xerath"]                      = "R",
-    ["Yasuo"]                       = "Q",
-    ["Zyra"]                        = "E",
-    ["Quinn"]                       = "E",
-    ["Rumble"]                      = "E",
-    ["Zed"]                         = "R",
+    ["Ahri"]                        = { "E" },
+    ["Amumu"]                       = { "Q", "R" },
+    ["Anivia"]                      = { "Q" },
+    ["Annie"]                       = { "R" },
+    ["Ashe"]                        = { "R" },
+    ["Bard"]                        = { "Q" },
+    ["Blitzcrank"]                  = { "Q" },
+    ["Brand"]                       = { "Q" },
+    ["Braum"]                       = { "Q" },
+    ["Cassiopeia"]                  = { "R" },
+    ["Darius"]                      = { "E" },
+    ["Draven"]                      = { "E" },
+    ["DrMundo"]                     = { "Q" },
+    ["Ekko"]                        = { "W" },
+    ["Elise"]                       = { "E" },
+    ["Evelynn"]                     = { "R" },
+    ["Ezreal"]                      = { "R" },
+    ["Fizz"]                        = { "R" },
+    ["Galio"]                       = { "R" },
+    ["Gnar"]                        = { "R" },
+    ["Gragas"]                      = { "R" },
+    ["Graves"]                      = { "R" },
+    ["Jinx"]                        = { "W" , "R"},
+    ["KhaZix"]                      = { "W" },
+    ["Leblanc"]                     = { "E" },
+    ["LeeSin"]                      = { "Q" },
+    ["Leona"]                       = { "E" , "R"},
+    ["Lux"]                         = { "Q" , "R"},
+    ["Malphite"]                    = { "R" },
+    ["Morgana"]                     = { "Q" },
+    ["Nami"]                        = { "Q" },
+    ["Nautilus"]                    = { "Q" },
+    ["Nidalee"]                     = { "Q" },
+    ["Orianna"]                     = { "R" },
+    ["Rengar"]                      = { "E" },
+    ["Riven"]                       = { "R" },
+    ["Sejuani"]                     = { "R" },
+    ["Sion"]                        = { "E" },
+    ["Shen"]                        = { "E" },
+    --["Shyvana"]                   = { "R" },
+    ["Sona"]                        = { "R" },
+    ["Swain"]                       = { "W" },
+    ["Thresh"]                      = { "Q" },
+    ["Varus"]                       = { "R" },
+    ["Veigar"]                      = { "E" },
+    ["Vi"]                          = { "Q" },
+    ["Xerath"]                      = { "E" , "R"},
+    ["Yasuo"]                       = { "Q" },
+    ["Zyra"]                        = { "E" },
+    ["Quinn"]                       = { "E" },
+    ["Rumble"]                      = { "E" },
+    ["Zed"]                         = { "R" },
+}
+
+local YASUO_WALL_SPELLS = {
+    ["Ahri"]                        = { "Q" , "E" },
+    ["Amumu"]                       = { "Q" },
+    ["Anivia"]                      = { "Q" },
+    ["Annie"]                       = { "R" },
+    ["Ashe"]                        = { "W" , "R" },
+    ["Bard"]                        = { "Q" },
+    ["Blitzcrank"]                  = { "Q" },
+    ["Brand"]                       = { "Q" },
+    ["Braum"]                       = { "Q" , "R" },
+    ["Caitlyn"]                     = { "Q" , "E", "R" },
+    ["Corki"]                       = { "Q" , "R" },
+    ["Cassiopeia"]                  = { "R" },
+    ["Diana"]                       = { "Q" },
+    ["Darius"]                      = { "E" },
+    ["Draven"]                      = { "E" , "R" },
+    ["DrMundo"]                     = { "Q" },
+    ["Ekko"]                        = { "Q" },
+    ["Elise"]                       = { "E" },
+    ["Ezreal"]                      = { "Q" , "W" , "R" },
+    ["Fiora"]                       = { "W" },
+    ["Fizz"]                        = { "R" },
+    ["Galio"]                       = { "E" },
+    ["Gnar"]                        = { "Q" },
+    ["Gragas"]                      = { "Q" ,  "R" },
+    ["Graves"]                      = { "R" },
+    ["Heimerdinger"]                = { "W" , "E" },
+    ["Irelia"]                      = { "R" },
+    ["Janna"]                       = { "Q" },
+    ["Jayce"]                       = { "Q" },
+    ["Jinx"]                        = { "W" , "R" },
+    ["Kalista"]                     = { "Q" },
+    ["Karma"]                       = { "Q" },
+    ["Kennen"]                      = { "Q" },
+    ["KhaZix"]                      = { "W" },
+    ["KogMaw"]                      = { "Q" , "E" },
+    ["Leblanc"]                     = { "E" },
+    ["LeeSin"]                      = { "Q" },
+    ["Leona"]                       = { "E" },
+    ["Lissandra"]                   = { "Q" ,  "E" },
+    ["Lulu"]                        = { "Q" },
+    ["Lux"]                         = { "Q" ,  "E" ,  "R" },
+    ["Morgana"]                     = { "Q" },
+    ["Nami"]                        = { "R" },
+    ["Nautilus"]                    = { "Q" },
+    ["Nocturne"]                    = { "Q" },
+    ["Nidalee"]                     = { "Q" },
+    ["Olaf"]                        = { "Q" },
+    ["Orianna"]                     = { "Q" , "E" },
+    ["Quinn"]                       = { "Q" },
+    ["Rengar"]                      = { "E" },
+    ["RekSai"]                      = { "Q" },
+    ["Riven"]                       = { "R" },
+    ["Rumble"]                      = { "E" },
+    ["Ryze"]                        = { "Q" },
+    ["Sejuani"]                     = { "Q" , "R"},
+    ["Sion"]                        = { "E" },
+    ["Soraka"]                      = { "Q" },
+    ["Shen"]                        = { "E" },
+    ["Shyvana"]                     = { "E" },
+    ["Sivir"]                       = { "Q" },
+    ["Skarner"]                     = { "E" },
+    ["Sona"]                        = { "R" },
+    ["TahmKench"]                   = { "Q" },
+    ["Thresh"]                      = { "Q" },
+    ["TwistedFate"]                 = { "Q" },
+    ["Twitch"]                      = { "W" },
+    ["Varus"]                       = { "Q" , "R" },
+    ["Veigar"]                      = { "Q" },
+    ["VelKoz"]                      = { "Q" },
+    ["Viktor"]                      = { "E" },
+    ["Xerath"]                      = { "E" },
+    ["Yasuo"]                       = { "Q" },
+    ["Zed"]                         = { "Q" },
+    ["Ziggs"]                       = { "W" },
+    ["Zilean"]                      = { "Q" },
+    ["Zyra"]                        = { "E" },
 }
 
 local EnemiesInGame = {}
-
-function IsGapclose(enemy, spelltype)
-    if IsValidTarget(enemy) and GAPCLOSER_SPELLS[enemy.charName] ~= nil then
-        for champ, spell in pairs(GAPCLOSER_SPELLS) do
-            if enemy.charName == champ and spell == spelltype then
-                return true
-            end
-        end
-    end
-    return false
-end
-
-function IsChanelling(enemy, spelltype)
-    if IsValidTarget(enemy) and CHANELLING_SPELLS[enemy.charName] ~= nil then
-        for champ, spell in pairs(CHANELLING_SPELLS) do
-            if enemy.charName == champ and spell == spelltype then
-                return true
-            end
-        end
-    end
-    return false
-end
-
-function IsCC(enemy, spelltype)
-    if IsValidTarget(enemy) and CC_SPELLS[enemy.charName] ~= nil then
-        for champ, spell in pairs(CC_SPELLS) do
-            if enemy.charName == champ and spell == spelltype then
-                return true
-            end
-        end
-    end
-    return false
-end
 
 function ExtraTime()
     return -0.07--Latency() - 0.1
@@ -2438,10 +2476,10 @@ end
 
 function _Initiator:CheckChannelingSpells()
     if #GetAllyHeroes() > 0 then
-        for idx, ally in ipairs(GetAllyHeroes()) do
-            for champ, spell in pairs(CHANELLING_SPELLS) do
-                if ally.charName == champ then
-                    self.Menu[ally.charName..spell] = true
+        for idx, enemy in ipairs(GetEnemyHeroes()) do
+            if CHANELLING_SPELLS[enemy.charName] then
+                for i, spell in pairs(CHANELLING_SPELLS[enemy.charName]) do
+                    self.Menu[enemy.charName..spell] = true
                 end
             end
         end
@@ -2451,10 +2489,10 @@ end
 
 function _Initiator:CheckGapcloserSpells()
     if #GetAllyHeroes() > 0 then
-        for idx, ally in ipairs(GetAllyHeroes()) do
-            for champ, spell in pairs(GAPCLOSER_SPELLS) do
-                if ally.charName == champ then
-                    self.Menu[ally.charName..spell] = true
+        for idx, enemy in ipairs(GetEnemyHeroes()) do
+            if GAPCLOSER_SPELLS[enemy.charName] then
+                for i, spell in pairs(GAPCLOSER_SPELLS[enemy.charName]) do
+                    self.Menu[enemy.charName..spell] = true
                 end
             end
         end
@@ -2568,8 +2606,21 @@ end
 function _Evader:CheckCC()
     if #GetEnemyHeroes() > 0 then
         for idx, enemy in ipairs(GetEnemyHeroes()) do
-            for champ, spell in pairs(CC_SPELLS) do
-                if enemy.charName == champ then
+            if CC_SPELLS[enemy.charName] then
+                for i, spell in pairs(CC_SPELLS[enemy.charName]) do
+                    self.Menu[enemy.charName..spell] = true
+                end
+            end
+        end
+    end
+    return self
+end
+
+function _Evader:CheckYasuoWall()
+    if #GetEnemyHeroes() > 0 then
+        for idx, enemy in ipairs(GetEnemyHeroes()) do
+            if YASUO_WALL_SPELLS[enemy.charName] then
+                for i, spell in pairs(YASUO_WALL_SPELLS[enemy.charName]) do
                     self.Menu[enemy.charName..spell] = true
                 end
             end
@@ -2641,8 +2692,8 @@ end
 function _Interrupter:CheckChannelingSpells()
     if #GetEnemyHeroes() > 0 then
         for idx, enemy in ipairs(GetEnemyHeroes()) do
-            for champ, spell in pairs(CHANELLING_SPELLS) do
-                if enemy.charName == champ then
+            if CHANELLING_SPELLS[enemy.charName] then
+                for i, spell in pairs(CHANELLING_SPELLS[enemy.charName]) do
                     self.Menu[enemy.charName..spell] = true
                 end
             end
@@ -2654,8 +2705,8 @@ end
 function _Interrupter:CheckGapcloserSpells()
     if #GetEnemyHeroes() > 0 then
         for idx, enemy in ipairs(GetEnemyHeroes()) do
-            for champ, spell in pairs(GAPCLOSER_SPELLS) do
-                if enemy.charName == champ then
+            if GAPCLOSER_SPELLS[enemy.charName] then
+                for i, spell in pairs(GAPCLOSER_SPELLS[enemy.charName]) do
                     self.Menu[enemy.charName..spell] = true
                 end
             end
