@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.19
+_G.SimpleLibVersion = 1.20
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -682,6 +682,7 @@ end
 function _Spell:__init(tab)
     assert(tab and type(tab) == "table", "_Spell: Table is invalid!")
     self.LastCastTime = 0
+    self.LastSentTime = 0
     self.Object = nil
     self.Source = myHero
     self.DrawSource = myHero
@@ -847,6 +848,7 @@ end
 function _Spell:CastToVector(vector)
     if self:IsReady() and vector ~= nil and not IsEvading() then
         if self:YasuoWall(vector) then return end
+        self.LastSentTime = os.clock()
         CastSpell(self.Slot, vector.x, vector.z)
     end
 end
@@ -861,20 +863,24 @@ function _Spell:Cast(target, t)
             if self:IsSkillShot() then
                 local CastPosition, WillHit = self:GetPrediction(target, t)
                 if CastPosition ~= nil and WillHit then
+                    self.LastSentTime = os.clock()
                     self:CastToVector(CastPosition)
                 end
             elseif self:IsTargetted() then
                 if self:YasuoWall(target) then return end
+                self.LastSentTime = os.clock()
                 CastSpell(self.Slot, target)
             elseif self:IsSelf() then
                 local CastPosition,  WillHit = self:GetPrediction(target, t)
                 if CastPosition ~= nil and GetDistanceSqr(self.Source, CastPosition) <= self.Range * self.Range then
                     if (target.type == myHero.type and WillHit) or (target.type ~= myHero.type) then
+                        self.LastSentTime = os.clock()
                         CastSpell(self.Slot)
                     end
                 end
             end
         elseif target == nil and self:IsSelf() then
+            self.LastSentTime = os.clock()
             CastSpell(self.Slot)
         end
     end
@@ -1563,7 +1569,7 @@ function _Prediction:GetPrediction(target, sp)
                 elseif skillshotType == SPELL_TYPE.CONE then
                     spell = ConeSS(speed, range, width, delay * 1000, col)
                 end
-                self.BindedSpells[name] = self.DP:bindSS(name, spell, 50)
+                self.BindedSpells[name] = self.DP:bindSS(name, spell, accuracy)
             else
                 self.BindedSpells[name].range = range
                 self.BindedSpells[name].speed = speed
@@ -1582,7 +1588,7 @@ function _Prediction:GetPrediction(target, sp)
             if state and pos and perc then
                 --local hitchance = self:AccuracyToHitChance(TypeOfPrediction, accuracy)
                 --local state, pos, perc = self.DP:predict(DPTarget(target), spell, hitchance, source)
-                WillHit = ((state == SkillShot.STATUS.SUCCESS_HIT and perc >= 50) or self:IsImmobile(target, sp)) 
+                WillHit = ((state == SkillShot.STATUS.SUCCESS_HIT and perc >= accuracy) or self:IsImmobile(target, sp)) 
                 CastPosition = pos
                 Position = pos
             end
