@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.21
+_G.SimpleLibVersion = 1.22
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -127,12 +127,12 @@ local CC_SPELLS = {
     ["Gnar"]                        = { "R" },
     ["Gragas"]                      = { "R" },
     ["Graves"]                      = { "R" },
-    ["Jinx"]                        = { "W" , "R"},
+    ["Jinx"]                        = { "W" , "R" },
     ["KhaZix"]                      = { "W" },
     ["Leblanc"]                     = { "E" },
     ["LeeSin"]                      = { "Q" },
-    ["Leona"]                       = { "E" , "R"},
-    ["Lux"]                         = { "Q" , "R"},
+    ["Leona"]                       = { "E" , "R" },
+    ["Lux"]                         = { "Q" , "R" },
     ["Malphite"]                    = { "R" },
     ["Morgana"]                     = { "Q" },
     ["Nami"]                        = { "Q" },
@@ -151,7 +151,7 @@ local CC_SPELLS = {
     ["Varus"]                       = { "R" },
     ["Veigar"]                      = { "E" },
     ["Vi"]                          = { "Q" },
-    ["Xerath"]                      = { "E" , "R"},
+    ["Xerath"]                      = { "E" , "R" },
     ["Yasuo"]                       = { "Q" },
     ["Zyra"]                        = { "E" },
     ["Quinn"]                       = { "E" },
@@ -183,7 +183,7 @@ local YASUO_WALL_SPELLS = {
     ["Fizz"]                        = { "R" },
     ["Galio"]                       = { "E" },
     ["Gnar"]                        = { "Q" },
-    ["Gragas"]                      = { "Q" ,  "R" },
+    ["Gragas"]                      = { "Q" , "R" },
     ["Graves"]                      = { "R" },
     ["Heimerdinger"]                = { "W" , "E" },
     ["Irelia"]                      = { "R" },
@@ -198,9 +198,9 @@ local YASUO_WALL_SPELLS = {
     ["Leblanc"]                     = { "E" },
     ["LeeSin"]                      = { "Q" },
     ["Leona"]                       = { "E" },
-    ["Lissandra"]                   = { "Q" ,  "E" },
+    ["Lissandra"]                   = { "Q" , "E" },
     ["Lulu"]                        = { "Q" },
-    ["Lux"]                         = { "Q" ,  "E" ,  "R" },
+    ["Lux"]                         = { "Q" , "E" ,  "R" },
     ["Morgana"]                     = { "Q" },
     ["Nami"]                        = { "R" },
     ["Nautilus"]                    = { "Q" },
@@ -1018,9 +1018,16 @@ end
 function _Spell:LoadProcessSpellCallback()
     if not self.ProcessCallback then
         self.ProcessCallback = true
-        AddProcessSpellCallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
+        if AddProcessSpellCallback then
+            AddProcessSpellCallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
+        end
         if AddProcessAttackCallback then
             AddProcessAttackCallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
+        end
+        if GetGameRegion():lower():find("na") or GetGameRegion():lower():find("euw") then
+            if AddProcessSpellNACallback then
+                AddProcessSpellNACallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
+            end
         end
     end
 end
@@ -1904,9 +1911,16 @@ function _OrbwalkManager:__init()
             end
         end
     )
-    AddProcessSpellCallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
+    if AddProcessSpellCallback then
+        AddProcessSpellCallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
+    end
     if AddProcessAttackCallback then
         AddProcessAttackCallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
+    end
+    if GetGameRegion():lower():find("na") or GetGameRegion():lower():find("euw") then
+        if AddProcessSpellNACallback then
+            AddProcessSpellNACallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
+        end
     end
     AddTickCallback(
         function()
@@ -2265,6 +2279,11 @@ function _OrbwalkManager:OrbLoad()
                     if AddProcessAttackCallback then
                         AddProcessAttackCallback(function(unit, spell) _G.SOWi:OnProcessSpell(unit, spell) end)
                     end
+                    if GetGameRegion():lower():find("na") or GetGameRegion():lower():find("euw") then
+                        if AddProcessSpellNACallback then
+                            AddProcessSpellNACallback(function(unit, spell) _G.SOWi:OnProcessSpell(unit, spell) end)
+                        end
+                    end
                     self:EnableMovement()
                     self:EnableAttacks()
                 end
@@ -2440,9 +2459,16 @@ function _Initiator:__init(menu)
             self.Menu:addParam(ally.charName.."R", ally.charName.." (R)", SCRIPT_PARAM_ONOFF, false)
         end
         self.Menu:addParam("Time",  "Time Limit to Initiate", SCRIPT_PARAM_SLICE, 2.5, 0, 8, 0)
-        AddProcessSpellCallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
+        if AddProcessSpellCallback then
+            AddProcessSpellCallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
+        end
         if AddProcessAttackCallback then
             AddProcessAttackCallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
+        end
+        if GetGameRegion():lower():find("na") or GetGameRegion():lower():find("euw") then
+            if AddProcessSpellNACallback then
+                AddProcessSpellNACallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
+            end
         end
         AddTickCallback(
             function()
@@ -2654,9 +2680,16 @@ function _Interrupter:__init(menu)
             self.Menu:addParam(enemy.charName.."R", enemy.charName.." (R)", SCRIPT_PARAM_ONOFF, false)
         end
         self.Menu:addParam("Time",  "Time Limit to Interrupt", SCRIPT_PARAM_SLICE, 2.5, 0, 8, 1)
-        AddProcessSpellCallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
+        if AddProcessSpellCallback then
+            AddProcessSpellCallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
+        end
         if AddProcessAttackCallback then
             AddProcessAttackCallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
+        end
+        if GetGameRegion():lower():find("na") or GetGameRegion():lower():find("euw") then
+            if AddProcessSpellNACallback then
+                AddProcessSpellNACallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
+            end
         end
         AddTickCallback(
             function()
