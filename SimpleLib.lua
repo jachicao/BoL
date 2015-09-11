@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.22
+_G.SimpleLibVersion = 1.23
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -756,6 +756,54 @@ function _Spell:__init(tab)
             self:AddToMenu()
             if self.Menu ~= nil then
                 self.Menu:addParam("PredictionSelected", "Prediction Selection", SCRIPT_PARAM_LIST, 1, Prediction.PredictionList)
+                Prediction:LoadPrediction(tostring(self.Menu._param[self.Menu:getParamIndex("PredictionSelected")].listTable[self.Menu.PredictionSelected]))
+                local lastest = self.Menu.PredictionSelected
+                self.Menu:setCallback("PredictionSelected",
+                    function(v)
+                        if v then
+                            Prediction:LoadPrediction(tostring(self.Menu._param[self.Menu:getParamIndex("PredictionSelected")].listTable[v]))
+                            if tostring(self.Menu._param[self.Menu:getParamIndex("PredictionSelected")].listTable[v]) == "DivinePred" then
+                                Prediction:BindSpell(self)
+                            end
+                            if tostring(self.Menu._param[self.Menu:getParamIndex("PredictionSelected")].listTable[lastest]) == "DivinePred" and v ~= lastest then
+                                local boolean = true
+                                for i, spell in ipairs(SpellManager.spells) do
+                                    if spell.Menu ~= nil then
+                                        if spell.Menu.PredictionSelected ~= nil then
+                                            if tostring(spell.Menu._param[spell.Menu:getParamIndex("PredictionSelected")].listTable[spell.Menu.PredictionSelected]) == "DivinePred" then
+                                                boolean = false
+                                            end
+                                        end
+                                    end
+                                end
+                                if boolean then
+                                    if not self.Draw then
+                                        self.Draw = true
+                                        AddDrawCallback(
+                                            function()
+                                                local p = WorldToScreen(D3DXVECTOR3(myHero.x, myHero.y, myHero.z))
+                                                local boolean = true
+                                                for i, spell in ipairs(SpellManager.spells) do
+                                                    if spell.Menu ~= nil then
+                                                        if spell.Menu.PredictionSelected ~= nil then
+                                                            if tostring(spell.Menu._param[spell.Menu:getParamIndex("PredictionSelected")].listTable[spell.Menu.PredictionSelected]) == "DivinePred" then
+                                                                boolean = false
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                                if OnScreen(p.x, p.y) and boolean then
+                                                    DrawText("Press 2x F9!", 25, p.x, p.y, ARGB(255, 255, 255, 255))
+                                                end
+                                            end
+                                        )
+                                    end
+                                end
+                            end
+                            lastest = v
+                        end
+                    end
+                    )
                 self.Menu:addParam("Combo", "X % Combo Accuracy", SCRIPT_PARAM_SLICE, 60, 0, 100)
                 self.Menu:addParam("Harass", "X % Harass Accuracy", SCRIPT_PARAM_SLICE, 70, 0, 100)
                 self.Menu:addParam("info", "80 % ~ Super High Accuracy", SCRIPT_PARAM_INFO, "")
@@ -763,6 +811,7 @@ function _Spell:__init(tab)
                 self.Menu:addParam("info3", "30 % ~ Medium Accuracy", SCRIPT_PARAM_INFO, "")
                 self.Menu:addParam("info4", "10 % ~ Low Accuracy", SCRIPT_PARAM_INFO, "")
             end
+            Prediction:BindSpell(self)
         elseif self:IsSelf() then
 
         end
@@ -1381,8 +1430,8 @@ function _Prediction:__init()
         ["Prodiction"] = false,
     }
     if FileExist(LIB_PATH.."VPrediction.lua") then
-        require "VPrediction"
         table.insert(self.PredictionList, "VPrediction")
+        require "VPrediction"
         self.Actives["VPrediction"] = true
         self.VP = VPrediction()
         _G.VP = self.VP
@@ -1410,26 +1459,14 @@ function _Prediction:__init()
         self.Actives["Prodiction"] = true
     end ]]
     if FileExist(LIB_PATH.."HPrediction.lua") then
-        require "HPrediction"
         table.insert(self.PredictionList, "HPrediction") 
-        self.Actives["HPrediction"] = true
-        self.HP = HPrediction()
-        _G.HP = self.HP
     end
     if VIP_USER and FileExist(LIB_PATH.."DivinePred.lua") and FileExist(LIB_PATH.."DivinePred.luac") then
-        require "DivinePred"
         table.insert(self.PredictionList, "DivinePred") 
-        self.Actives["DivinePred"] = true
         self.BindedSpells = {}
-        self.DP = DivinePred()
-        _G.DP = self.DP
     end
     if FileExist(LIB_PATH.."SPrediction.lua") and FileExist(LIB_PATH.."Collision.lua") then
-        require "SPrediction"
         table.insert(self.PredictionList, "SPrediction") 
-        self.Actives["SPrediction"] = true
-        self.SP = SPrediction()
-        _G.SP = self.SP
     end
     self.LastRequest = 0
     local ImmobileBuffs = {
@@ -1461,6 +1498,63 @@ function _Prediction:__init()
             end
         end
     )
+end
+
+function _Prediction:LoadPrediction(TypeOfPrediction)
+    if TypeOfPrediction == "VPrediction" then
+    elseif TypeOfPrediction == "Prodiction" then
+    elseif TypeOfPrediction == "DivinePred" then
+        if self.DP == nil then
+            require "DivinePred"
+            self.Actives["DivinePred"] = true
+            self.DP = DivinePred()
+            _G.DP = self.DP
+            DelayAction(function()
+                PrintMessage("DivinePred is causing a lot of fps drops, take care!")
+            end, 0.8)
+        end
+    elseif TypeOfPrediction == "HPrediction" then
+        if self.HP == nil then
+            require "HPrediction"
+            self.Actives["HPrediction"] = true
+            self.HP = HPrediction()
+            _G.HP = self.HP
+        end
+    elseif TypeOfPrediction == "SPrediction" then
+        if self.SP == nil then
+            require "SPrediction"
+            self.Actives["SPrediction"] = true
+            self.SP = SPrediction()
+            _G.SP = self.SP
+        end
+    end
+end
+
+function _Prediction:BindSpell(sp)
+    if self.DP ~= nil and sp ~= nil then
+        local delay = sp.Delay ~= nil and sp.Delay or 0
+        local width = sp.Width ~= nil and sp.Width or 1
+        local range = sp.Range ~= nil and sp.Range or math.huge
+        local speed = sp.Speed ~= nil and sp.Speed or math.huge
+        local skillshotType = sp.Type ~= nil and sp.Type or SPELL_TYPE.CIRCULAR
+        local collision = sp.Collision ~= nil and sp.Collision or false
+        local aoe = sp.Aoe ~= nil and sp.Aoe or false
+        local accuracy = sp.Accuracy ~= nil and sp.Accuracy or 60
+        local source = sp.Source ~= nil and sp.Source or myHero
+        local name = sp.Name ~= nil and sp.Name or "Q"
+        local col = collision and 0 or math.huge
+        if self.BindedSpells[name] == nil then
+            local spell = nil
+            if skillshotType == SPELL_TYPE.LINEAR then
+                spell = LineSS(speed, range, width, delay * 1000, col)
+            elseif skillshotType == SPELL_TYPE.CIRCULAR then
+                spell = CircleSS(speed, range, width, delay * 1000, col)
+            elseif skillshotType == SPELL_TYPE.CONE then
+                spell = ConeSS(speed, range, width, delay * 1000, col)
+            end
+            self.BindedSpells[name] = self.DP:bindSS(name, spell, 50)
+        end
+    end
 end
 
 
@@ -1574,6 +1668,7 @@ function _Prediction:GetPrediction(target, sp)
         local source = sp.Source ~= nil and sp.Source or myHero
         local name = sp.Name ~= nil and sp.Name or "Q"
         TypeOfPrediction = (not target.type:lower():find("hero")) and "VPrediction" or TypeOfPrediction
+        TypeOfPrediction = self.Actives[TypeOfPrediction] == true and TypeOfPrediction or "VPrediction"
         -- VPrediction
         if TypeOfPrediction == "Prodiction" and self.Actives[TypeOfPrediction] then
             local aoe = false
@@ -1606,15 +1701,7 @@ function _Prediction:GetPrediction(target, sp)
         elseif TypeOfPrediction == "DivinePred" and self.Actives[TypeOfPrediction] then
             local col = collision and 0 or math.huge
             if self.BindedSpells[name] == nil then
-                local spell = nil
-                if skillshotType == SPELL_TYPE.LINEAR then
-                    spell = LineSS(speed, range, width, delay * 1000, col)
-                elseif skillshotType == SPELL_TYPE.CIRCULAR then
-                    spell = CircleSS(speed, range, width, delay * 1000, col)
-                elseif skillshotType == SPELL_TYPE.CONE then
-                    spell = ConeSS(speed, range, width, delay * 1000, col)
-                end
-                self.BindedSpells[name] = self.DP:bindSS(name, spell, accuracy)
+                self:BindSpell(sp)
             else
                 self.BindedSpells[name].range = range
                 self.BindedSpells[name].speed = speed
@@ -1633,7 +1720,7 @@ function _Prediction:GetPrediction(target, sp)
             if state and pos and perc then
                 --local hitchance = self:AccuracyToHitChance(TypeOfPrediction, accuracy)
                 --local state, pos, perc = self.DP:predict(DPTarget(target), spell, hitchance, source)
-                WillHit = ((state == SkillShot.STATUS.SUCCESS_HIT and perc >= accuracy) or self:IsImmobile(target, sp)) 
+                WillHit = ((state == SkillShot.STATUS.SUCCESS_HIT and perc >= 50) or self:IsImmobile(target, sp)) 
                 CastPosition = pos
                 Position = pos
             end
