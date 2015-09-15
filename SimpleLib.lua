@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.23
+_G.SimpleLibVersion = 1.24
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -3134,7 +3134,7 @@ function _KeyManager:IsHarassPressed()
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "MMA" then
-            if _G.MMA_IsHybrid() then
+            if _G.MMA_IsDualCarrying() then
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
