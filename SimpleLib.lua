@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.29
+_G.SimpleLibVersion = 1.30
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -3140,7 +3140,7 @@ function _KeyManager:IsClearPressed()
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "MMA" then
-            if _G.MMA_IsClearing() then
+            if _G.MMA_IsLaneClearing() then
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
@@ -3171,7 +3171,7 @@ function _KeyManager:IsLastHitPressed()
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "MMA" then
-            if _G.MMA_IsLasthitting() then
+            if _G.MMA_IsLastHitting() then
                 return true
             end
         elseif OrbwalkManager.OrbLoaded == "Big Fat Walk" then
