@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.30
+_G.SimpleLibVersion = 1.31
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1715,7 +1715,7 @@ function _Prediction:GetPrediction(target, sp)
             if state and pos and perc then
                 --local hitchance = self:AccuracyToHitChance(TypeOfPrediction, accuracy)
                 --local state, pos, perc = self.DP:predict(DPTarget(target), spell, hitchance, source)
-                WillHit = ((state == SkillShot.STATUS.SUCCESS_HIT and perc >= 50) or self:IsImmobile(target, sp)) 
+                WillHit = ((state == SkillShot.STATUS.SUCCESS_HIT) or self:IsImmobile(target, sp)) 
                 CastPosition = pos
                 Position = pos
             end
@@ -1981,23 +1981,12 @@ function _OrbwalkManager:__init()
             end
         end
     )
-    AddAnimationCallback(
-        function(unit, animation)
-            if unit.isMe then
-                if self:IsAttacking() then
-                    if not animation:lower():find("attack") then
-                        self:ResetMove()
-                    end
-                end
-                self.LastAnimationName = animation
-            end
-        end
-    )
+    AddAnimationCallback(function(unit, animation) self:OnAnimation(unit, animation) end)
     if AddProcessSpellCallback then
         AddProcessSpellCallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
     end
     if AddProcessAttackCallback then
-        AddProcessAttackCallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
+        AddProcessAttackCallback(function(unit, spell) self:OnProcessAttack(unit, spell) end)
     end
     AddTickCallback(
         function()
@@ -2092,8 +2081,26 @@ function _OrbwalkManager:LoadCommonKeys(m)
     end
 end
 
-function _OrbwalkManager:OnProcessSpell(unit, spell)
-    if unit and unit.isMe and spell and spell.name then
+function _OrbwalkManager:OnAnimation(unit, animation)
+    if unit and animation then
+        if unit.isMe then
+            if self:GetTime() - self.AA.LastTime + self:Latency() < 1 * self:WindUpTime() then
+                if not animation:lower():find("attack") then
+                    self:ResetMove()
+                end
+            else
+                if animation:lower():find("attack") and self:GetTime() - self.AA.LastTime + self:Latency() >= 1 * self:AnimationTime() - 25/1000 then
+                    self.AA.IsAttacking = true
+                    self.AA.LastTime = self:GetTime() - self:Latency()
+                end
+            end
+            self.LastAnimationName = animation
+        end
+    end
+end
+
+function _OrbwalkManager:OnProcessAttack(unit, spell)
+    if unit and spell and unit.isMe and spell.name then
         if self:IsAutoAttack(spell.name) then
             if not self.DataUpdated then
                 self.BaseAnimationTime = 1 / (spell.animationTime * myHero.attackSpeed)
@@ -2101,9 +2108,15 @@ function _OrbwalkManager:OnProcessSpell(unit, spell)
                 self.DataUpdated = true
             end
             self.AA.LastTarget = spell.target
-            self.AA.IsAttacking = true
-            self.AA.LastTime = self:GetTime() - self:Latency()
-        elseif self:IsReset(spell.name) then
+            self.AA.IsAttacking = false
+            self.AA.LastTime = self:GetTime() - self:Latency() - spell.windUpTime
+        end
+    end
+end
+
+function _OrbwalkManager:OnProcessSpell(unit, spell)
+    if unit and unit.isMe and spell and spell.name then
+        if self:IsReset(spell.name) then
             self.GotReset = true
             DelayAction(
                 function()
@@ -2135,11 +2148,33 @@ function _OrbwalkManager:AnimationTime()
 end
 
 function _OrbwalkManager:CanAttack(ExtraTime)
+    if self.OrbLoaded == "AutoCarry" then
+        return _G.AutoCarry.Orbwalker:CanShoot()
+    elseif self.OrbLoaded == "SxOrbWalk" then
+        return _G.SxOrb:CanAttack()
+    elseif self.OrbLoaded == "SOW" then
+    elseif self.OrbLoaded == "Big Fat Walk" then
+    elseif self.OrbLoaded == "MMA" then
+        return _G.MMA_CanAttack()
+    elseif self.OrbLoaded == "NOW" then
+        return _G.NOWi:TimeToAttack()
+    end
     local int = ExtraTime ~= nil and ExtraTime or 0
     return self:GetTime() - self.AA.LastTime + self:Latency() >= 1 * self:AnimationTime() - 25/1000 + int and not IsEvading()
 end
 
 function _OrbwalkManager:CanMove(ExtraTime)
+    if self.OrbLoaded == "AutoCarry" then
+        return _G.AutoCarry.Orbwalker:CanMove()
+    elseif self.OrbLoaded == "SxOrbWalk" then
+        return _G.SxOrb:CanMove()
+    elseif self.OrbLoaded == "SOW" then
+    elseif self.OrbLoaded == "Big Fat Walk" then
+    elseif self.OrbLoaded == "MMA" then
+        return _G.MMA_CanMove()
+    elseif self.OrbLoaded == "NOW" then
+        return _G.NOWi:TimeToMove()
+    end
     local int = ExtraTime ~= nil and ExtraTime or 0
     return self:GetTime() - self.AA.LastTime + self:Latency() >= 1 * self:WindUpTime() + int and not IsEvading()
 end
