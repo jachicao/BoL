@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.31
+_G.SimpleLibVersion = 1.32
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -2109,7 +2109,7 @@ function _OrbwalkManager:OnProcessAttack(unit, spell)
             end
             self.AA.LastTarget = spell.target
             self.AA.IsAttacking = false
-            self.AA.LastTime = self:GetTime() - self:Latency() - spell.windUpTime
+            self.AA.LastTime = self:GetTime() - self:Latency() - self:WindUpTime()
         end
     end
 end
