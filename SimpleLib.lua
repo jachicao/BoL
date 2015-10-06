@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.33
+_G.SimpleLibVersion = 1.35
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -2159,6 +2159,10 @@ function _OrbwalkManager:CanAttack(ExtraTime)
     elseif self.OrbLoaded == "NOW" then
         return _G.NOWi:TimeToAttack()
     end
+    return self:_CanAttack(ExtraTime)
+end
+
+function  _OrbwalkManager:_CanAttack(ExtraTime)
     local int = ExtraTime ~= nil and ExtraTime or 0
     return self:GetTime() - self.AA.LastTime + self:Latency() >= 1 * self:AnimationTime() - 25/1000 + int and not IsEvading()
 end
@@ -2175,6 +2179,10 @@ function _OrbwalkManager:CanMove(ExtraTime)
     elseif self.OrbLoaded == "NOW" then
         return _G.NOWi:TimeToMove()
     end
+    return self:_CanMove(ExtraTime)
+end
+
+function _OrbwalkManager:_CanMove(ExtraTime)
     local int = ExtraTime ~= nil and ExtraTime or 0
     return self:GetTime() - self.AA.LastTime + self:Latency() >= 1 * self:WindUpTime() + int and not IsEvading()
 end
@@ -3258,7 +3266,7 @@ function _KeyManager:RegisterKeys()
                             _G.SxOrb:RegisterHotKey("fight",  menu, param)
                         elseif OrbwalkManager.OrbLoaded == "MMA" then
                             if menu._param[menu:getParamIndex(param)].key then
-                                _G.MMA_AddKey(menu._param[menu:getParamIndex(param)].key, 'Orbwalking', menu._param[menu:getParamIndex(param)].pType)
+                                _G.MMA_AddKey(string.char(menu._param[menu:getParamIndex(param)].key), 'Orbwalking', menu._param[menu:getParamIndex(param)].pType)
                             end
                         end
                     end
@@ -3281,7 +3289,7 @@ function _KeyManager:RegisterKeys()
                             _G.SxOrb:RegisterHotKey("harass", menu, param)
                         elseif OrbwalkManager.OrbLoaded == "MMA" then
                             if menu._param[menu:getParamIndex(param)].key then
-                                _G.MMA_AddKey(menu._param[menu:getParamIndex(param)].key, 'Orbwalking', menu._param[menu:getParamIndex(param)].pType)
+                                _G.MMA_AddKey(string.char(menu._param[menu:getParamIndex(param)].key), 'Orbwalking', menu._param[menu:getParamIndex(param)].pType)
                             end
                         end
                     end
@@ -3304,7 +3312,7 @@ function _KeyManager:RegisterKeys()
                             _G.SxOrb:RegisterHotKey("laneclear", menu, param)
                         elseif OrbwalkManager.OrbLoaded == "MMA" then
                             if menu._param[menu:getParamIndex(param)].key then
-                                _G.MMA_AddKey(menu._param[menu:getParamIndex(param)].key, 'Laneclearing', menu._param[menu:getParamIndex(param)].pType)
+                                _G.MMA_AddKey(string.char(menu._param[menu:getParamIndex(param)].key), 'Laneclearing', menu._param[menu:getParamIndex(param)].pType)
                             end
                         end
                     end
@@ -3327,7 +3335,7 @@ function _KeyManager:RegisterKeys()
                             _G.SxOrb:RegisterHotKey("lasthit", menu, param)
                         elseif OrbwalkManager.OrbLoaded == "MMA" then
                             if menu._param[menu:getParamIndex(param)].key then
-                                _G.MMA_AddKey(menu._param[menu:getParamIndex(param)].key, 'Lasthitting', menu._param[menu:getParamIndex(param)].pType)
+                                _G.MMA_AddKey(string.char(menu._param[menu:getParamIndex(param)].key), 'Lasthitting', menu._param[menu:getParamIndex(param)].pType)
                             end
                         end
                     end
