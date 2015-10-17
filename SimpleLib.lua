@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.36
+_G.SimpleLibVersion = 1.37
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1430,7 +1430,7 @@ function _Prediction:__init()
         self.Actives["VPrediction"] = true
         self.VP = VPrediction()
         _G.VP = self.VP
-        if _G.VP.version < 2.97 then
+        if _G.VP.version < 2.973 then
             PrintMessage("Downloading the lastest version of VPrediction...")
             local r = _Required()
             local d = _Downloader({Name = "VPrediction", Url = "raw.githubusercontent.com/SidaBoL/Scripts/master/Common/VPrediction.lua", Extension = "lua", UseHttps = true})
@@ -1470,6 +1470,7 @@ function _Prediction:__init()
         [29] = true,
         [24] = true,
     }
+    --[[
     AddApplyBuffCallback(
         function(source, unit, buff)
             if unit and buff and buff.type then
@@ -1492,7 +1493,7 @@ function _Prediction:__init()
                 end
             end
         end
-    )
+    )]]
 end
 
 function _Prediction:LoadPrediction(TypeOfPrediction)
