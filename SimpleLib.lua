@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.39
+_G.SimpleLibVersion = 1.40
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -264,11 +264,13 @@ function CheckUpdate()
 end
 
 function Immune(target)
+    --[[
     if EnemiesInGame["Kayle"] and TargetHaveBuff("judicatorintervention", target) then return true
     elseif target.charName == "Tryndamere" and TargetHaveBuff("undyingrage", target) then return true
     elseif target.charName == "Sion" and TargetHaveBuff("sionpassivezombie", target) then return true
     elseif target.charName == "Aatrox" and TargetHaveBuff("aatroxpassivedeath", target) then return true
     elseif EnemiesInGame["Zilean"] and TargetHaveBuff("chronoshift", target) then return true end
+    ]]
     return false
 end
 
@@ -1455,16 +1457,16 @@ function _Prediction:__init()
     end ]]
     if FileExist(LIB_PATH.."HPrediction.lua") then
         --table.insert(self.PredictionList, "HPrediction") 
-        PrintMessage("Temporary disabled HPrediction due to investigation about Bugsplats, will be enabled soon.")
+        PrintMessage("Temporary disabled HPrediction due to investigation about bugsplats, will be enabled soon.")
     end
     if VIP_USER and FileExist(LIB_PATH.."DivinePred.lua") and FileExist(LIB_PATH.."DivinePred.luac") then
         --table.insert(self.PredictionList, "DivinePred") 
-        PrintMessage("Temporary disabled DivinePred due to investigation about Bugsplats, will be enabled soon.")
         self.BindedSpells = {}
+        PrintMessage("Temporary disabled DivinePred due to investigation about bugsplats, will be enabled soon.")
     end
     if FileExist(LIB_PATH.."SPrediction.lua") and FileExist(LIB_PATH.."Collision.lua") then
         --table.insert(self.PredictionList, "SPrediction") 
-        PrintMessage("Temporary disabled SPrediction due of investigation about Bugsplats, will be enabled soon.")
+        PrintMessage("Temporary disabled SPrediction due of investigation about bugsplats, will be enabled soon.")
     end
     self.LastRequest = 0
     local ImmobileBuffs = {
@@ -2599,13 +2601,13 @@ function _Initiator:OnProcessSpell(unit, spell)
     if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.type and unit.team and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
         if unit.type == myHero.type and unit.team == myHero.team then
             local spelltype = ""
-            if unit:GetSpellData(_Q).name:find(spell.name) then
+            if tostring(unit:GetSpellData(_Q).name):find(spell.name) then
                 spelltype = "Q"
-            elseif unit:GetSpellData(_W).name:find(spell.name) then
+            elseif tostring(unit:GetSpellData(_W).name):find(spell.name) then
                 spelltype = "W"
-            elseif unit:GetSpellData(_E).name:find(spell.name) then
+            elseif tostring(unit:GetSpellData(_E).name):find(spell.name) then
                 spelltype = "E"
-            elseif unit:GetSpellData(_R).name:find(spell.name) then
+            elseif tostring(unit:GetSpellData(_R).name):find(spell.name) then
                 spelltype = "R"
             end
             if spelltype ~= "" then
@@ -2699,27 +2701,28 @@ function _Evader:__init(menu)
 end
 
 function _Evader:OnProcessSpell(unit, spell)
-    if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.type and unit.team and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
+    if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.type and unit.team and spell.windUpTime and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
         if unit.type == myHero.type and unit.team ~= myHero.team then
             local spelltype = ""
-            if unit:GetSpellData(_Q).name:find(spell.name) then
+            if tostring(unit:GetSpellData(_Q).name):find(spell.name) then
                 spelltype = "Q"
-            elseif unit:GetSpellData(_W).name:find(spell.name) then
+            elseif tostring(unit:GetSpellData(_W).name):find(spell.name) then
                 spelltype = "W"
-            elseif unit:GetSpellData(_E).name:find(spell.name) then
+            elseif tostring(unit:GetSpellData(_E).name):find(spell.name) then
                 spelltype = "E"
-            elseif unit:GetSpellData(_R).name:find(spell.name) then
+            elseif tostring(unit:GetSpellData(_R).name):find(spell.name) then
                 spelltype = "R"
             end
             if spelltype ~= "" then
                 if self.Menu[unit.charName..spelltype] then 
                     DelayAction(
-                        function() 
+                        function(unit, spell) 
                             table.insert(self.ActiveSpells, {Time = os.clock() - Latency(), Unit = unit, Spell = spell, SpellType = spelltype})
                             self:CheckHitChampion(unit, spell, spelltype)
                         end
                     , 
                         math.max(spell.windUpTime * self.Menu.Humanizer/100 - 2 * Latency(), 0)
+                    , {unit, spell}
                     )
                 end
             end
@@ -2850,13 +2853,13 @@ function _Interrupter:OnProcessSpell(unit, spell)
         if unit.type == myHero.type and unit.team ~= myHero.team then
 
             local spelltype = ""
-            if unit:GetSpellData(_Q).name:find(spell.name) then
+            if tostring(unit:GetSpellData(_Q).name):find(spell.name) then
                 spelltype = "Q"
-            elseif unit:GetSpellData(_W).name:find(spell.name) then
+            elseif tostring(unit:GetSpellData(_W).name):find(spell.name) then
                 spelltype = "W"
-            elseif unit:GetSpellData(_E).name:find(spell.name) then
+            elseif tostring(unit:GetSpellData(_E).name):find(spell.name) then
                 spelltype = "E"
-            elseif unit:GetSpellData(_R).name:find(spell.name) then
+            elseif tostring(unit:GetSpellData(_R).name):find(spell.name) then
                 spelltype = "R"
             end
             if spelltype ~= "" then
