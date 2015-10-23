@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.38
+_G.SimpleLibVersion = 1.39
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1040,7 +1040,7 @@ function _Spell:LoadCreateAndDeleteCallback()
     if not self.ObjectCallback then
         AddCreateObjCallback(
             function(obj)
-                if obj and obj.name and self.Object == nil and obj.name:lower():find("missile") and os.clock() - self.LastCastTime > self.Delay * 0.8 and os.clock() - self.LastCastTime < self.Delay * 1.2 and ( (obj.spellOwner and obj.spellOwner.isMe) or GetDistanceSqr(self.Source, obj) < 10 * 10) then
+                if obj and obj.name and self.Object == nil and obj.name:lower() == "missile" and os.clock() - self.LastCastTime > self.Delay * 0.8 and os.clock() - self.LastCastTime < self.Delay * 1.2 and ( (obj.spellOwner and obj.spellOwner.isMe) or GetDistanceSqr(self.Source, obj) < 10 * 10) then
                     for _, s in ipairs(self.TrackObject) do
                         if obj.name:lower():find(s:lower()) then
                             self.Object = obj
@@ -1051,7 +1051,7 @@ function _Spell:LoadCreateAndDeleteCallback()
         )
         AddDeleteObjCallback(
             function(obj)
-                if obj and obj.name and self.Object ~= nil and obj.name:lower():find("missile") and GetDistanceSqr(obj, self.Object) < math.pow(10, 2) then
+                if obj and obj.name and self.Object ~= nil and obj.name:lower() == "missile" and GetDistanceSqr(obj, self.Object) < math.pow(10, 2) then
                     for _, s in ipairs(self.TrackObject) do
                         if obj.name:lower():find(s:lower()) then
                             self.Object = nil
@@ -1454,14 +1454,17 @@ function _Prediction:__init()
         self.Actives["Prodiction"] = true
     end ]]
     if FileExist(LIB_PATH.."HPrediction.lua") then
-        table.insert(self.PredictionList, "HPrediction") 
+        --table.insert(self.PredictionList, "HPrediction") 
+        PrintMessage("Temporary disabled HPrediction due to investigation about Bugsplats, will be enabled soon.")
     end
     if VIP_USER and FileExist(LIB_PATH.."DivinePred.lua") and FileExist(LIB_PATH.."DivinePred.luac") then
-        table.insert(self.PredictionList, "DivinePred") 
+        --table.insert(self.PredictionList, "DivinePred") 
+        PrintMessage("Temporary disabled DivinePred due to investigation about Bugsplats, will be enabled soon.")
         self.BindedSpells = {}
     end
     if FileExist(LIB_PATH.."SPrediction.lua") and FileExist(LIB_PATH.."Collision.lua") then
-        table.insert(self.PredictionList, "SPrediction") 
+        --table.insert(self.PredictionList, "SPrediction") 
+        PrintMessage("Temporary disabled SPrediction due of investigation about Bugsplats, will be enabled soon.")
     end
     self.LastRequest = 0
     local ImmobileBuffs = {
@@ -1977,7 +1980,7 @@ function _OrbwalkManager:__init()
 
     AddDeleteObjCallback(
         function(obj)
-            if obj and obj.name and self.AA.Object ~= nil and obj.name == self.AA.Object.name and obj.networkID == self.AA.Object.networkID then
+            if obj and obj.name and self.AA.Object ~= nil and obj.networkID == self.AA.Object.networkID then
                 self.AA.Object = nil
             end
         end
@@ -2595,12 +2598,28 @@ end
 function _Initiator:OnProcessSpell(unit, spell)
     if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.type and unit.team and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
         if unit.type == myHero.type and unit.team == myHero.team then
+            local spelltype = ""
+            if unit:GetSpellData(_Q).name:find(spell.name) then
+                spelltype = "Q"
+            elseif unit:GetSpellData(_W).name:find(spell.name) then
+                spelltype = "W"
+            elseif unit:GetSpellData(_E).name:find(spell.name) then
+                spelltype = "E"
+            elseif unit:GetSpellData(_R).name:find(spell.name) then
+                spelltype = "R"
+            end
+            if spelltype ~= "" then
+                if self.Menu[unit.charName..spelltype] then 
+                    table.insert(self.ActiveSpells, {Time = os.clock() - Latency(), Unit = unit})
+                end
+            end
+            --[[
             local spelltype, casttype = getSpellType(unit, spell.name)
             if spelltype == "Q" or spelltype == "W" or spelltype == "E" or spelltype == "R" then
                 if self.Menu[unit.charName..spelltype] then 
                     table.insert(self.ActiveSpells, {Time = os.clock() - Latency(), Unit = unit})
                 end
-            end
+            end]]
         end
     end
 end
@@ -2682,6 +2701,29 @@ end
 function _Evader:OnProcessSpell(unit, spell)
     if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.type and unit.team and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
         if unit.type == myHero.type and unit.team ~= myHero.team then
+            local spelltype = ""
+            if unit:GetSpellData(_Q).name:find(spell.name) then
+                spelltype = "Q"
+            elseif unit:GetSpellData(_W).name:find(spell.name) then
+                spelltype = "W"
+            elseif unit:GetSpellData(_E).name:find(spell.name) then
+                spelltype = "E"
+            elseif unit:GetSpellData(_R).name:find(spell.name) then
+                spelltype = "R"
+            end
+            if spelltype ~= "" then
+                if self.Menu[unit.charName..spelltype] then 
+                    DelayAction(
+                        function() 
+                            table.insert(self.ActiveSpells, {Time = os.clock() - Latency(), Unit = unit, Spell = spell, SpellType = spelltype})
+                            self:CheckHitChampion(unit, spell, spelltype)
+                        end
+                    , 
+                        math.max(spell.windUpTime * self.Menu.Humanizer/100 - 2 * Latency(), 0)
+                    )
+                end
+            end
+            --[[
             local spelltype, casttype = getSpellType(unit, spell.name)
             if spelltype == "Q" or spelltype == "W" or spelltype == "E" or spelltype == "R" then
                 if self.Menu[unit.charName..spelltype] then
@@ -2694,7 +2736,7 @@ function _Evader:OnProcessSpell(unit, spell)
                         math.max(spell.windUpTime * self.Menu.Humanizer/100 - 2 * Latency(), 0)
                     )
                 end
-            end
+            end]]
         end
     end
 end
@@ -2806,12 +2848,28 @@ end
 function _Interrupter:OnProcessSpell(unit, spell)
     if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.type and unit.team and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
         if unit.type == myHero.type and unit.team ~= myHero.team then
-            local spelltype, casttype = getSpellType(unit, spell.name)
-            if spelltype == "Q" or spelltype == "W" or spelltype == "E" or spelltype == "R" then
-                if self.Menu[unit.charName..spelltype] then 
+
+            local spelltype = ""
+            if unit:GetSpellData(_Q).name:find(spell.name) then
+                spelltype = "Q"
+            elseif unit:GetSpellData(_W).name:find(spell.name) then
+                spelltype = "W"
+            elseif unit:GetSpellData(_E).name:find(spell.name) then
+                spelltype = "E"
+            elseif unit:GetSpellData(_R).name:find(spell.name) then
+                spelltype = "R"
+            end
+            if spelltype ~= "" then
+                if self.Menu[unit.charName..spelltype] then
                     table.insert(self.ActiveSpells, {Time = os.clock() - Latency(), Unit = unit, Spell = spell})
                 end
             end
+            --[[
+            local spelltype, casttype = getSpellType(unit, spell.name)
+            if spelltype == "Q" or spelltype == "W" or spelltype == "E" or spelltype == "R" then
+                if self.Menu[unit.charName..spelltype] then 
+                end
+            end]]
         end
     end
 end
