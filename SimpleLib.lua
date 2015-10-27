@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.40
+_G.SimpleLibVersion = 1.41
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -331,7 +331,7 @@ end
 
 function FindItemSlot(name)
     for slot = ITEM_1, ITEM_7 do
-        if myHero:CanUseSpell(slot) == READY and myHero:GetSpellData(slot) ~= nil and myHero:GetSpellData(slot).name ~= nil and ( myHero:GetSpellData(slot).name:lower():find(name:lower()) or name:lower():find(myHero:GetSpellData(slot).name:lower()) ) then
+        if myHero:CanUseSpell(slot) == READY and myHero:GetSpellData(slot) ~= nil and myHero:GetSpellData(slot).name ~= nil and ( tostring(myHero:GetSpellData(slot).name):lower():find(tostring(name):lower()) or tostring(name):lower():find(tostring(myHero:GetSpellData(slot).name):lower()) ) then
             return slot
         end
     end
@@ -340,7 +340,7 @@ end
 
 function FindSummonerSlot(name)
     for slot = SUMMONER_1, SUMMONER_2 do
-        if myHero:GetSpellData(slot)  ~= nil and myHero:GetSpellData(slot).name  ~= nil and ( myHero:GetSpellData(slot).name:lower():find(name:lower()) or name:lower():find(myHero:GetSpellData(slot).name:lower()) ) then
+        if myHero:GetSpellData(slot)  ~= nil and myHero:GetSpellData(slot).name  ~= nil and ( tostring(myHero:GetSpellData(slot).name):lower():find(tostring(name):lower()) or tostring(name):lower():find(tostring(myHero:GetSpellData(slot).name):lower()) ) then
             return slot
         end
     end
@@ -506,7 +506,7 @@ function _arrangePriorities()
     local function _SetPriority(tab, hero, priority)
         if table ~= nil and hero ~= nil and priority ~= nil and type(table) == "table" then
             for i=1, #tab, 1 do
-                if hero.charName:find(tab[i]) ~= nil and type(priority) == "number" then
+                if tostring(hero.charName):find(tostring(tab[i])) ~= nil and type(priority) == "number" then
                     TS_SetHeroPriority(priority, hero.charName)
                 end
             end
@@ -530,7 +530,7 @@ function _AutoSmite:__init()
     if self.Spell.Slot ~= nil then
         if _G.SimpleAutoSmite == nil then
             self.JungleMinions = minionManager(MINION_JUNGLE, self.Spell.Range + 100, myHero, MINION_SORT_MAXHEALTH_DEC)
-            _G.SimpleAutoSmite = scriptConfig("SimpleLib - Auto Smite", "SimpleAutoSmite".."07072015"..myHero.charName)
+            _G.SimpleAutoSmite = scriptConfig("SimpleLib - Auto Smite", "SimpleAutoSmite".."07072015"..tostring(myHero.charName))
             _G.SimpleAutoSmite:addParam("Baron", "Use Smite on Dragon/Baron", SCRIPT_PARAM_ONOFF, true)
             _G.SimpleAutoSmite:addParam("Killsteal", "Use Smite to Killsteal", SCRIPT_PARAM_ONOFF, true)
             AddTickCallback(
@@ -539,7 +539,7 @@ function _AutoSmite:__init()
                         if _G.SimpleAutoSmite.Baron then
                             self.JungleMinions:update()
                             for i, minion in pairs(self.JungleMinions.objects) do
-                                if self.Spell:ValidTarget(minion) and minion.health > 0 and (minion.charName:lower():find("dragon") or minion.charName:lower():find("baron")) then
+                                if self.Spell:ValidTarget(minion) and minion.health > 0 and (tostring(minion.charName):lower():find("dragon") or tostring(minion.charName):lower():find("baron")) then
                                     if self.Spell:Damage(minion) > minion.health then
                                         self.Spell:Cast(minion)
                                     end
@@ -681,7 +681,7 @@ end
 
 function _SpellManager:InitMenu()
     if _G.SpellManagerMenu == nil then
-        _G.SpellManagerMenu = scriptConfig("SimpleLib - Spell Manager", "SpellManager".."19052015"..myHero.charName)
+        _G.SpellManagerMenu = scriptConfig("SimpleLib - Spell Manager", "SpellManager".."19052015"..tostring(myHero.charName))
         if VIP_USER then
             _G.SpellManagerMenu:addParam("Packet", "Enable Packets", SCRIPT_PARAM_ONOFF, false)
             _G.SpellManagerMenu:addParam("Exploit", "Enable No-Face Exploit", SCRIPT_PARAM_ONOFF, false)
@@ -918,7 +918,7 @@ end
 function _Spell:YasuoWall(vector)
     if YasuoWall ~= nil and self.Speed ~= math.huge and vector ~= nil then
         for i, enemy in ipairs(GetEnemyHeroes()) do
-            if enemy.charName:lower():find("yasuo") then
+            if tostring(enemy.charName):lower():find("yasuo") then
                 local level = enemy:GetSpellData(_W) ~= nil and enemy:GetSpellData(_W).level ~= nil and enemy:GetSpellData(_W).level or 0
                 local width = 250 + level * 50
                 local pos1 = Vector(YasuoWall.Object) + Vector(Vector(YasuoWall.Object) - Vector(YasuoWall.StartVector)):normalized():perpendicular() * width/2
@@ -1042,10 +1042,13 @@ function _Spell:LoadCreateAndDeleteCallback()
     if not self.ObjectCallback then
         AddCreateObjCallback(
             function(obj)
-                if obj and obj.name and self.Object == nil and obj.name:lower() == "missile" and os.clock() - self.LastCastTime > self.Delay * 0.8 and os.clock() - self.LastCastTime < self.Delay * 1.2 and ( (obj.spellOwner and obj.spellOwner.isMe) or GetDistanceSqr(self.Source, obj) < 10 * 10) then
-                    for _, s in ipairs(self.TrackObject) do
-                        if obj.name:lower():find(s:lower()) then
-                            self.Object = obj
+                if obj and obj.name and self.Object == nil and os.clock() - self.LastCastTime > self.Delay * 0.8 and os.clock() - self.LastCastTime < self.Delay * 1.2 then
+                    local name = tostring(obj.name):lower()
+                    if name == "missile" and ( (obj.spellOwner and obj.spellOwner.isMe) or GetDistanceSqr(self.Source, obj) < 10 * 10) then
+                        for _, s in ipairs(self.TrackObject) do
+                            if obj.name:lower():find(s:lower()) then
+                                self.Object = obj
+                            end
                         end
                     end
                 end
@@ -1053,7 +1056,7 @@ function _Spell:LoadCreateAndDeleteCallback()
         )
         AddDeleteObjCallback(
             function(obj)
-                if obj and obj.name and self.Object ~= nil and obj.name:lower() == "missile" and GetDistanceSqr(obj, self.Object) < math.pow(10, 2) then
+                if obj and obj.name and self.Object ~= nil and tostring(obj.name):lower() == "missile" and GetDistanceSqr(obj, self.Object) < math.pow(10, 2) then
                     for _, s in ipairs(self.TrackObject) do
                         if obj.name:lower():find(s:lower()) then
                             self.Object = nil
@@ -1082,7 +1085,7 @@ function _Spell:OnProcessSpell(unit, spell)
     if unit and spell and spell.name and unit.isMe then
         if self.Track ~= nil then
             for _, s in ipairs(self.Track) do
-                if spell.name:lower():find(s:lower()) then
+                if tostring(spell.name):lower():find(tostring(s):lower()) then
                     self.LastCastTime = os.clock()
                     if self.TrackCallback ~= nil then
                         self.TrackCallback(spell)
@@ -1151,7 +1154,7 @@ function _Spell:ObjectsInArea(objects)
 end
 
 function _Spell:IsReady()
-    if myHero.charName == "Kennen" then
+    if tostring(myHero.charName) == "Kennen" then
         if self.Slot ~= nil and self.Slot == _W then
             return myHero:CanUseSpell(self.Slot) == READY or myHero:CanUseSpell(self.Slot) == 3
         end
@@ -1169,7 +1172,7 @@ end
 
 function _Spell:Damage(target, stage)
     if self.DamageName ~= nil and self.Slot ~= nil then
-        if myHero.charName == "Irelia" and self.Slot ~= nil and self.Slot == _Q then
+        if tostring(myHero.charName) == "Irelia" and self.Slot ~= nil and self.Slot == _Q then
             return getDmg(self.DamageName, target, myHero, stage) + getDmg("AD", target, myHero, stage)
         end
         if self.DamageFunction ~= nil then
@@ -1864,7 +1867,7 @@ function _OrbwalkManager:__init()
             table.insert(self.OrbwalkList, "SOW")
         end
         if _G.OrbwalkManagerMenu == nil then
-            _G.OrbwalkManagerMenu = scriptConfig("SimpleLib - Orbwalk Manager", "OrbwalkManager".."24052015"..myHero.charName)
+            _G.OrbwalkManagerMenu = scriptConfig("SimpleLib - Orbwalk Manager", "OrbwalkManager".."24052015"..tostring(myHero.charName))
         end
         if #self.OrbwalkList > 0 then
             _G.OrbwalkManagerMenu:addParam("OrbwalkerSelected", "Orbwalker Selection", SCRIPT_PARAM_LIST, 1, self.OrbwalkList)
@@ -1973,7 +1976,7 @@ function _OrbwalkManager:__init()
 
     AddCreateObjCallback(
         function(obj)
-            if self.AA.Object == nil and obj.name:lower() == "missile" and self:GetTime() - self.AA.LastTime + self:Latency() < 1.2 * self:WindUpTime() and obj.spellOwner and obj.spellName and obj.spellOwner.isMe and self:IsAutoAttack(obj.spellName) then
+            if self.AA.Object == nil and tostring(obj.name):lower() == "missile" and self:GetTime() - self.AA.LastTime + self:Latency() < 1.2 * self:WindUpTime() and obj.spellOwner and obj.spellName and obj.spellOwner.isMe and self:IsAutoAttack(obj.spellName) then
                 self:ResetMove()
                 self.AA.Object = obj
             end
@@ -1982,7 +1985,7 @@ function _OrbwalkManager:__init()
 
     AddDeleteObjCallback(
         function(obj)
-            if obj and obj.name and self.AA.Object ~= nil and obj.networkID == self.AA.Object.networkID then
+            if obj and self.AA.Object ~= nil and obj.networkID == self.AA.Object.networkID then
                 self.AA.Object = nil
             end
         end
@@ -2028,11 +2031,11 @@ function _OrbwalkManager:GetOrbwalkSelected()
 end
 
 function _OrbwalkManager:IsAutoAttack(name)
-    return name and ((name:lower():find("attack") and not self.NoAttacks[name:lower()]) or self.Attacks[name:lower()])
+    return name and ((tostring(name):lower():find("attack") and not self.NoAttacks[tostring(name):lower()]) or self.Attacks[tostring(name):lower()])
 end
 
 function _OrbwalkManager:IsReset(name)
-    return name and self.Resets[name:lower()]
+    return name and self.Resets[tostring(name):lower()]
 end
 
 function _OrbwalkManager:LoadCommonKeys(m)
@@ -2598,7 +2601,7 @@ function _Initiator:__init(menu)
 end
 
 function _Initiator:OnProcessSpell(unit, spell)
-    if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.type and unit.team and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
+    if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.charName and unit.type and unit.team and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
         if unit.type == myHero.type and unit.team == myHero.team then
             local spelltype = ""
             if tostring(unit:GetSpellData(_Q).name):find(spell.name) then
@@ -2611,7 +2614,7 @@ function _Initiator:OnProcessSpell(unit, spell)
                 spelltype = "R"
             end
             if spelltype ~= "" then
-                if self.Menu[unit.charName..spelltype] then 
+                if self.Menu[tostring(unit.charName)..spelltype] then 
                     table.insert(self.ActiveSpells, {Time = os.clock() - Latency(), Unit = unit})
                 end
             end
@@ -2701,7 +2704,7 @@ function _Evader:__init(menu)
 end
 
 function _Evader:OnProcessSpell(unit, spell)
-    if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.type and unit.team and spell.windUpTime and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
+    if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.type and unit.team and unit.charName and spell.windUpTime and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
         if unit.type == myHero.type and unit.team ~= myHero.team then
             local spelltype = ""
             if tostring(unit:GetSpellData(_Q).name):find(spell.name) then
@@ -2714,16 +2717,22 @@ function _Evader:OnProcessSpell(unit, spell)
                 spelltype = "R"
             end
             if spelltype ~= "" then
-                if self.Menu[unit.charName..spelltype] then 
-                    DelayAction(
-                        function(unit, spell) 
+                if self.Menu[tostring(unit.charName)..spelltype] then
+                    if spell.windUpTime * self.Menu.Humanizer/100 > 0 then
+                        DelayAction(
+                            function(unit, spell) 
+                                table.insert(self.ActiveSpells, {Time = os.clock() - Latency(), Unit = unit, Spell = spell, SpellType = spelltype})
+                                self:CheckHitChampion(unit, spell, spelltype)
+                            end
+                        , 
+                            spell.windUpTime * self.Menu.Humanizer/100
+                        , 
+                            {unit, spell}
+                        )
+                    else
                             table.insert(self.ActiveSpells, {Time = os.clock() - Latency(), Unit = unit, Spell = spell, SpellType = spelltype})
                             self:CheckHitChampion(unit, spell, spelltype)
-                        end
-                    , 
-                        math.max(spell.windUpTime * self.Menu.Humanizer/100 - 2 * Latency(), 0)
-                    , {unit, spell}
-                    )
+                    end
                 end
             end
             --[[
@@ -2745,13 +2754,14 @@ function _Evader:OnProcessSpell(unit, spell)
 end
 
 function _Evader:CheckHitChampion(unit, spell, spelltype, champion)
-    if unit and spell and spelltype and unit.valid then
+    if unit and unit.charName and spell and spelltype and unit.valid then
         local hitchampion = false
         local champion = champion ~= nil and champion or myHero
-        if skillData[unit.charName] ~= nil and skillData[unit.charName][spelltype] ~= nil then
-            local shottype  = skillData[unit.charName][spelltype].type
-            local radius    = skillData[unit.charName][spelltype].radius
-            local maxdistance = skillData[unit.charName][spelltype].maxdistance
+        local charName = tostring(unit.charName)
+        if skillData[charName] ~= nil and skillData[charName][spelltype] ~= nil then
+            local shottype  = skillData[charName][spelltype].type
+            local radius    = skillData[charName][spelltype].radius
+            local maxdistance = skillData[charName][spelltype].maxdistance
             if shottype == 0 then hitchampion = spell.target and spell.target.networkID == champion.networkID or false
             elseif shottype == 1 then hitchampion = checkhitlinepass(unit, spell.endPos, radius, maxdistance, champion, champion.boundingRadius)
             elseif shottype == 2 then hitchampion = checkhitlinepoint(unit, spell.endPos, radius, maxdistance, champion, champion.boundingRadius)
@@ -2849,7 +2859,7 @@ function _Interrupter:__init(menu)
 end
 
 function _Interrupter:OnProcessSpell(unit, spell)
-    if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.type and unit.team and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
+    if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.type and unit.team and unit.charName and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
         if unit.type == myHero.type and unit.team ~= myHero.team then
 
             local spelltype = ""
@@ -2863,7 +2873,7 @@ function _Interrupter:OnProcessSpell(unit, spell)
                 spelltype = "R"
             end
             if spelltype ~= "" then
-                if self.Menu[unit.charName..spelltype] then
+                if self.Menu[tostring(unit.charName)..spelltype] then
                     table.insert(self.ActiveSpells, {Time = os.clock() - Latency(), Unit = unit, Spell = spell})
                 end
             end
@@ -3615,10 +3625,10 @@ function _SimpleTargetSelector:__init(mode, range, damageType)
                 end
                 if best then
                     if self.selected and self.selected.networkID == best.networkID then
-                        print("<font color=\"#c30000\"><b>Target Selector:</b></font> <font color=\"#FFFFFF\">" .. "New target unselected: "..best.charName.. "</font>") 
+                        print("<font color=\"#c30000\"><b>Target Selector:</b></font> <font color=\"#FFFFFF\">" .. "New target unselected: "..tostring(best.charName).. "</font>") 
                         self.selected = nil
                     else
-                        print("<font color=\"#c30000\"><b>Target Selector:</b></font> <font color=\"#FFFFFF\">" .. "New target selected: "..best.charName.. "</font>") 
+                        print("<font color=\"#c30000\"><b>Target Selector:</b></font> <font color=\"#FFFFFF\">" .. "New target selected: "..tostring(best.charName).. "</font>") 
                         self.selected = best
                     end
                 end
@@ -3807,14 +3817,14 @@ if _G.SimpleLibLoaded == nil then
     DelayAction(function() CheckUpdate() end, 1)
     YasuoWall = nil
     for i, enemy in ipairs(GetEnemyHeroes()) do
-        EnemiesInGame[enemy.charName] = true
+        EnemiesInGame[tostring(enemy.charName)] = true
     end
     if EnemiesInGame["Yasuo"] then 
         AddProcessSpellCallback(
             function(unit, spell)
                 if myHero.dead then return end
                 if unit and spell and unit.charName and spell.name then
-                    if unit.charName:lower():find("yasuo") and spell.name:lower():find("yasuow") then
+                    if tostring(unit.charName):lower():find("yasuo") and tostring(spell.name):lower():find("yasuow") then
                         YasuoWall = {StartVector = Vector(unit), EndVector = Vector(spell.endPos.x, unit.y, spell.endPos.z)}
                         DelayAction(function() YasuoWall = nil end, 4.5)
                     end
@@ -3824,7 +3834,7 @@ if _G.SimpleLibLoaded == nil then
         AddCreateObjCallback(
             function(obj)
                 if obj and obj.name then
-                    if obj.name:lower():find("yasuo_base_w_windwall") and not obj.name:lower():find("activate") then
+                    if tostring(obj.name):lower():find("yasuo_base_w_windwall") and not tostring(obj.name):lower():find("activate") then
                         if YasuoWall ~= nil then
                             YasuoWall.Object = obj
                         end
@@ -3835,7 +3845,7 @@ if _G.SimpleLibLoaded == nil then
         AddDeleteObjCallback(
             function(obj)
                 if obj and obj.name then
-                    if obj.name:lower():find("yasuo_base_w_windwall") and not obj.name:lower():find("activate") then
+                    if tostring(obj.name):lower():find("yasuo_base_w_windwall") and not tostring(obj.name):lower():find("activate") then
                         if YasuoWall ~= nil then
                             YasuoWall = nil
                         end
