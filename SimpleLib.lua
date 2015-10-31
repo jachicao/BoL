@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.41
+_G.SimpleLibVersion = 1.42
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1459,8 +1459,8 @@ function _Prediction:__init()
         self.Actives["Prodiction"] = true
     end ]]
     if FileExist(LIB_PATH.."HPrediction.lua") then
-        --table.insert(self.PredictionList, "HPrediction") 
-        PrintMessage("Temporary disabled HPrediction due to investigation about bugsplats, will be enabled soon.")
+        table.insert(self.PredictionList, "HPrediction") 
+        --PrintMessage("Temporary disabled HPrediction due to investigation about bugsplats, will be enabled soon.")
     end
     if VIP_USER and FileExist(LIB_PATH.."DivinePred.lua") and FileExist(LIB_PATH.."DivinePred.luac") then
         --table.insert(self.PredictionList, "DivinePred") 
@@ -1468,8 +1468,8 @@ function _Prediction:__init()
         PrintMessage("Temporary disabled DivinePred due to investigation about bugsplats, will be enabled soon.")
     end
     if FileExist(LIB_PATH.."SPrediction.lua") and FileExist(LIB_PATH.."Collision.lua") then
-        --table.insert(self.PredictionList, "SPrediction") 
-        PrintMessage("Temporary disabled SPrediction due of investigation about bugsplats, will be enabled soon.")
+        table.insert(self.PredictionList, "SPrediction") 
+        --PrintMessage("Temporary disabled SPrediction due of investigation about bugsplats, will be enabled soon.")
     end
     self.LastRequest = 0
     local ImmobileBuffs = {
@@ -1672,7 +1672,7 @@ function _Prediction:GetPrediction(target, sp)
         local source = sp.Source ~= nil and sp.Source or myHero
         local name = sp.Name ~= nil and sp.Name or "Q"
         TypeOfPrediction = (not target.type:lower():find("hero")) and "VPrediction" or TypeOfPrediction
-        TypeOfPrediction = self.Actives[TypeOfPrediction] == true and TypeOfPrediction or "VPrediction"
+        TypeOfPrediction = self.Actives[tostring(TypeOfPrediction)] == true and TypeOfPrediction or "VPrediction"
         -- VPrediction
         if TypeOfPrediction == "Prodiction" and self.Actives[TypeOfPrediction] then
             local aoe = false
