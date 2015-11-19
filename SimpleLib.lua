@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.42
+_G.SimpleLibVersion = 1.43
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -2392,22 +2392,22 @@ function _OrbwalkManager:OrbLoad()
             elseif self:GetOrbwalkSelected() == "SxOrbWalk" then
                 if _G.SxOrb == nil then
                     require 'SxOrbWalk'
-                    self.OrbLoaded = self:GetOrbwalkSelected()
                     _G.SxOrb:LoadToMenu()
-                    self:EnableMovement()
-                    self:EnableAttacks()
                 end
+                self.OrbLoaded = self:GetOrbwalkSelected()
+                self:EnableMovement()
+                self:EnableAttacks()
             elseif self:GetOrbwalkSelected() == "SOW" then
                 if _G.SOWi == nil then
                     require 'SOW'
-                    self.OrbLoaded = self:GetOrbwalkSelected()
-                    if _G.VP then
-                        _G.SOWi = SOW(_G.VP)
-                    end
                     _G.SOWi:LoadToMenu()
-                    self:EnableMovement()
-                    self:EnableAttacks()
                 end
+                self.OrbLoaded = self:GetOrbwalkSelected()
+                if _G.VP then
+                    _G.SOWi = SOW(_G.VP)
+                end
+                self:EnableMovement()
+                self:EnableAttacks()
             elseif self:GetOrbwalkSelected() == "Big Fat Walk" then
                 require "Big Fat Orbwalker"
                 self.OrbLoaded = self:GetOrbwalkSelected()
@@ -2417,10 +2417,10 @@ function _OrbwalkManager:OrbLoad()
                 if _G.NOWi == nil then
                     require "Nebelwolfi's Orb Walker"
                     _G.NOWi = NebelwolfisOrbWalker()
-                    self.OrbLoaded = self:GetOrbwalkSelected()
-                    self:EnableMovement()
-                    self:EnableAttacks()
                 end
+                self.OrbLoaded = self:GetOrbwalkSelected()
+                self:EnableMovement()
+                self:EnableAttacks()
             end
         end
     else
