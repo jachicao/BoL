@@ -2382,6 +2382,7 @@ function _OrbwalkManager:OrbLoad()
             else
                 _G.AutoCarry.MyHero:MovementEnabled(false)
                 _G.AutoCarry.MyHero:AttacksEnabled(false)
+                PrintMessage("Disabling Movement and Attacks from SAC:R because you decided to use "..self:GetOrbwalkSelected()..".")
                 return
             end
         end
