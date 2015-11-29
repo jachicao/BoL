@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.43
+_G.SimpleLibVersion = 1.44
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -2125,7 +2125,7 @@ end
 
 function _OrbwalkManager:OnProcessSpell(unit, spell)
     if unit and unit.isMe and spell and spell.name then
-        if self:IsReset(spell.name) then
+        if self:IsReset(tostring(spell.name)) then
             self.GotReset = true
             DelayAction(
                 function()
@@ -2382,7 +2382,7 @@ function _OrbwalkManager:OrbLoad()
             else
                 _G.AutoCarry.MyHero:MovementEnabled(false)
                 _G.AutoCarry.MyHero:AttacksEnabled(false)
-                PrintMessage("Disabling Movement and Attacks from SAC:R because you decided to use "..self:GetOrbwalkSelected()..".")
+                PrintMessage("Disabling Movement and Attacks from AutoCarry because you decided to use "..self:GetOrbwalkSelected()..".")
                 return
             end
         end
@@ -2607,16 +2607,17 @@ function _Initiator:__init(menu)
 end
 
 function _Initiator:OnProcessSpell(unit, spell)
-    if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.charName and unit.type and unit.team and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
-        if unit.type == myHero.type and unit.team == myHero.team then
+    if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.type and unit.team and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
+        if unit.type == myHero.type and unit.team == myHero.team and unit.charName then
             local spelltype = ""
-            if tostring(unit:GetSpellData(_Q).name):find(spell.name) then
+            local spellName = tostring(spell.name)
+            if tostring(unit:GetSpellData(_Q).name):find(spellName) then
                 spelltype = "Q"
-            elseif tostring(unit:GetSpellData(_W).name):find(spell.name) then
+            elseif tostring(unit:GetSpellData(_W).name):find(spellName) then
                 spelltype = "W"
-            elseif tostring(unit:GetSpellData(_E).name):find(spell.name) then
+            elseif tostring(unit:GetSpellData(_E).name):find(spellName) then
                 spelltype = "E"
-            elseif tostring(unit:GetSpellData(_R).name):find(spell.name) then
+            elseif tostring(unit:GetSpellData(_R).name):find(spellName) then
                 spelltype = "R"
             end
             if spelltype ~= "" then
@@ -2710,16 +2711,17 @@ function _Evader:__init(menu)
 end
 
 function _Evader:OnProcessSpell(unit, spell)
-    if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.type and unit.team and unit.charName and spell.windUpTime and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
-        if unit.type == myHero.type and unit.team ~= myHero.team then
+    if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.type and unit.team and spell.windUpTime and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
+        if unit.type == myHero.type and unit.team ~= myHero.team and unit.charName then
             local spelltype = ""
-            if tostring(unit:GetSpellData(_Q).name):find(spell.name) then
+            local spellName = tostring(spell.name)
+            if tostring(unit:GetSpellData(_Q).name):find(spellName) then
                 spelltype = "Q"
-            elseif tostring(unit:GetSpellData(_W).name):find(spell.name) then
+            elseif tostring(unit:GetSpellData(_W).name):find(spellName) then
                 spelltype = "W"
-            elseif tostring(unit:GetSpellData(_E).name):find(spell.name) then
+            elseif tostring(unit:GetSpellData(_E).name):find(spellName) then
                 spelltype = "E"
-            elseif tostring(unit:GetSpellData(_R).name):find(spell.name) then
+            elseif tostring(unit:GetSpellData(_R).name):find(spellName) then
                 spelltype = "R"
             end
             if spelltype ~= "" then
@@ -2865,17 +2867,17 @@ function _Interrupter:__init(menu)
 end
 
 function _Interrupter:OnProcessSpell(unit, spell)
-    if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.type and unit.team and unit.charName and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
-        if unit.type == myHero.type and unit.team ~= myHero.team then
-
+    if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.type and unit.team and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
+        if unit.type == myHero.type and unit.team ~= myHero.team and unit.charName then
             local spelltype = ""
-            if tostring(unit:GetSpellData(_Q).name):find(spell.name) then
+            local spellName = tostring(spell.name)
+            if tostring(unit:GetSpellData(_Q).name):find(spellName) then
                 spelltype = "Q"
-            elseif tostring(unit:GetSpellData(_W).name):find(spell.name) then
+            elseif tostring(unit:GetSpellData(_W).name):find(spellName) then
                 spelltype = "W"
-            elseif tostring(unit:GetSpellData(_E).name):find(spell.name) then
+            elseif tostring(unit:GetSpellData(_E).name):find(spellName) then
                 spelltype = "E"
-            elseif tostring(unit:GetSpellData(_R).name):find(spell.name) then
+            elseif tostring(unit:GetSpellData(_R).name):find(spellName) then
                 spelltype = "R"
             end
             if spelltype ~= "" then
