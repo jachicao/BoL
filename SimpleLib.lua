@@ -1463,9 +1463,9 @@ function _Prediction:__init()
         --PrintMessage("Temporary disabled HPrediction due to investigation about bugsplats, will be enabled soon.")
     end
     if VIP_USER and FileExist(LIB_PATH.."DivinePred.lua") and FileExist(LIB_PATH.."DivinePred.luac") then
-        --table.insert(self.PredictionList, "DivinePred") 
+        table.insert(self.PredictionList, "DivinePred") 
         self.BindedSpells = {}
-        PrintMessage("Temporary disabled DivinePred due to investigation about bugsplats, will be enabled soon.")
+        --PrintMessage("Temporary disabled DivinePred due to investigation about bugsplats, will be enabled soon.")
     end
     if FileExist(LIB_PATH.."SPrediction.lua") and FileExist(LIB_PATH.."Collision.lua") then
         table.insert(self.PredictionList, "SPrediction") 
@@ -2382,7 +2382,7 @@ function _OrbwalkManager:OrbLoad()
             else
                 _G.AutoCarry.MyHero:MovementEnabled(false)
                 _G.AutoCarry.MyHero:AttacksEnabled(false)
-                PrintMessage("Disabling Movement and Attacks from AutoCarry because you decided to use "..self:GetOrbwalkSelected()..".")
+                PrintMessage("Disabling Movement and Attacks from SAC:R because you decided to use "..self:GetOrbwalkSelected()..".")
                 return
             end
         end
