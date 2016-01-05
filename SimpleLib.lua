@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.44
+_G.SimpleLibVersion = 1.45
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1042,11 +1042,11 @@ function _Spell:LoadCreateAndDeleteCallback()
     if not self.ObjectCallback then
         AddCreateObjCallback(
             function(obj)
-                if obj and obj.name and self.Object == nil and os.clock() - self.LastCastTime > self.Delay * 0.8 and os.clock() - self.LastCastTime < self.Delay * 1.2 then
+                if obj and obj.name and obj.valid and self.Object == nil and os.clock() - self.LastCastTime > self.Delay * 0.8 and os.clock() - self.LastCastTime < self.Delay * 1.2 then
                     local name = tostring(obj.name):lower()
-                    if name == "missile" and ( (obj.spellOwner and obj.spellOwner.isMe) or GetDistanceSqr(self.Source, obj) < 10 * 10) then
+                    if ( (obj.spellOwner and obj.spellName and obj.spellOwner.isMe) or GetDistanceSqr(self.Source, obj) <= math.pow(10, 2)) then
                         for _, s in ipairs(self.TrackObject) do
-                            if obj.name:lower():find(s:lower()) then
+                            if name:find(tostring(s):lower()) then
                                 self.Object = obj
                             end
                         end
@@ -1056,9 +1056,10 @@ function _Spell:LoadCreateAndDeleteCallback()
         )
         AddDeleteObjCallback(
             function(obj)
-                if obj and obj.name and self.Object ~= nil and tostring(obj.name):lower() == "missile" and GetDistanceSqr(obj, self.Object) < math.pow(10, 2) then
+                if obj and obj.name and self.Object ~= nil and self.Object.valid and GetDistanceSqr(obj, self.Object) <= math.pow(10, 2) then
+                    local name = tostring(obj.name):lower()
                     for _, s in ipairs(self.TrackObject) do
-                        if obj.name:lower():find(s:lower()) then
+                        if name:find(tostring(s):lower()) then
                             self.Object = nil
                         end
                     end
@@ -1713,11 +1714,11 @@ function _Prediction:GetPrediction(target, sp)
                 self.BindedSpells[name].delay = delay * 1000
                 self.BindedSpells[name].allowedCollisionCount = col
                 if skillshotType == SPELL_TYPE.LINEAR then
-                    self.BindedSpells[name].type = "LineSS"
+                    self.BindedSpells[name].type = SkillShot.TYPE.LINE
                 elseif skillshotType == SPELL_TYPE.CIRCULAR then
-                    self.BindedSpells[name].type = "CircleSS"
+                    self.BindedSpells[name].type = SkillShot.TYPE.CIRCLE
                 elseif skillshotType == SPELL_TYPE.CONE then
-                    self.BindedSpells[name].type = "ConeSS"
+                    self.BindedSpells[name].type = SkillShot.TYPE.CONE
                 end
             end
             local state, pos, perc = self.DP:predict(name, target, Vector(source))
@@ -1776,10 +1777,10 @@ function _Prediction:GetPrediction(target, sp)
             tab.delay = delay
             tab.type = tipo
             if aoe then
-                CastPosition, WillHit, NumberOfHits = self.HP:GetPredict(HPSkillshot(tab), target, source, aoe)
+                CastPosition, WillHit, NumberOfHits = self.HP:GetPredict(HPSkillshot(tab), target, Vector(source), aoe)
                 Position = CastPosition
             else
-                CastPosition, WillHit = self.HP:GetPredict(HPSkillshot(tab), target, source)
+                CastPosition, WillHit = self.HP:GetPredict(HPSkillshot(tab), target, Vector(source))
                 Position = CastPosition
             end
         elseif TypeOfPrediction == "SPrediction" and self.Actives[TypeOfPrediction] then
@@ -1976,7 +1977,7 @@ function _OrbwalkManager:__init()
 
     AddCreateObjCallback(
         function(obj)
-            if self.AA.Object == nil and tostring(obj.name):lower() == "missile" and self:GetTime() - self.AA.LastTime + self:Latency() < 1.2 * self:WindUpTime() and obj.spellOwner and obj.spellName and obj.spellOwner.isMe and self:IsAutoAttack(obj.spellName) then
+            if self.AA.Object == nil and obj.name and obj.valid and tostring(obj.name):lower() == "missile" and self:GetTime() - self.AA.LastTime + self:Latency() < 1.2 * self:WindUpTime() and obj.spellOwner and obj.spellName and obj.spellOwner.isMe and self:IsAutoAttack(tostring(obj.spellName)) then
                 self:ResetMove()
                 self.AA.Object = obj
             end
@@ -2124,7 +2125,7 @@ function _OrbwalkManager:OnProcessAttack(unit, spell)
 end
 
 function _OrbwalkManager:OnProcessSpell(unit, spell)
-    if unit and unit.isMe and spell and spell.name then
+    if unit and spell and spell.name and unit.isMe then
         if self:IsReset(tostring(spell.name)) then
             self.GotReset = true
             DelayAction(
@@ -2691,6 +2692,7 @@ function _Evader:__init(menu)
         AddProcessSpellCallback(function(unit, spell) self:OnProcessSpell(unit, spell) end)
         AddTickCallback(
             function()
+                if myHero.dead then return end
                 if #self.ActiveSpells > 0 then
                     for i = #self.ActiveSpells, 1, -1 do
                         local sp = self.ActiveSpells[i]
@@ -2711,7 +2713,7 @@ function _Evader:__init(menu)
 end
 
 function _Evader:OnProcessSpell(unit, spell)
-    if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.type and unit.team and spell.windUpTime and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
+    if unit and spell and spell.name and not unit.isMe and unit.type and unit.team and spell.windUpTime and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
         if unit.type == myHero.type and unit.team ~= myHero.team and unit.charName then
             local spelltype = ""
             local spellName = tostring(spell.name)
@@ -2850,6 +2852,7 @@ function _Interrupter:__init(menu)
         end
         AddTickCallback(
             function()
+                if myHero.dead then return end
                 if #self.ActiveSpells > 0 then
                     for i = #self.ActiveSpells, 1, -1 do
                         local spell = self.ActiveSpells[i]
@@ -2867,7 +2870,7 @@ function _Interrupter:__init(menu)
 end
 
 function _Interrupter:OnProcessSpell(unit, spell)
-    if not myHero.dead and unit and spell and spell.name and not unit.isMe and unit.type and unit.team and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
+    if unit and spell and spell.name and not unit.isMe and unit.type and unit.team and GetDistanceSqr(myHero, unit) < 2000 * 2000 then
         if unit.type == myHero.type and unit.team ~= myHero.team and unit.charName then
             local spelltype = ""
             local spellName = tostring(spell.name)
@@ -3831,7 +3834,7 @@ if _G.SimpleLibLoaded == nil then
         AddProcessSpellCallback(
             function(unit, spell)
                 if myHero.dead then return end
-                if unit and spell and unit.charName and spell.name then
+                if unit and spell and spell.name and unit.type == myHero.type and unit.charName then
                     if tostring(unit.charName):lower():find("yasuo") and tostring(spell.name):lower():find("yasuow") then
                         YasuoWall = {StartVector = Vector(unit), EndVector = Vector(spell.endPos.x, unit.y, spell.endPos.z)}
                         DelayAction(function() YasuoWall = nil end, 4.5)
@@ -3841,7 +3844,7 @@ if _G.SimpleLibLoaded == nil then
         )
         AddCreateObjCallback(
             function(obj)
-                if obj and obj.name then
+                if obj and obj.name and obj.valid then
                     if tostring(obj.name):lower():find("yasuo_base_w_windwall") and not tostring(obj.name):lower():find("activate") then
                         if YasuoWall ~= nil then
                             YasuoWall.Object = obj
