@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.46
+_G.SimpleLibVersion = 1.47
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1690,137 +1690,138 @@ function _Prediction:GetPrediction(target, sp)
         local accuracy = sp.Accuracy ~= nil and sp.Accuracy or 60
         local source = sp.Source ~= nil and sp.Source or myHero
         local name = sp.Name ~= nil and sp.Name or "Q"
-        TypeOfPrediction = (not target.type:lower():find("hero")) and "VPrediction" or TypeOfPrediction
+        TypeOfPrediction = target.type ~= myHero.type and "VPrediction" or TypeOfPrediction
         TypeOfPrediction = self.Actives[tostring(TypeOfPrediction)] == true and TypeOfPrediction or "VPrediction"
-        -- VPrediction
-        if TypeOfPrediction == "Prodiction" and self.Actives[TypeOfPrediction] then
-            local aoe = false
-            if aoe then
-                if skillshotType == SPELL_TYPE.LINEAR then
-                    local CastPosition1, info, objects = Prodiction.GetLineAOEPrediction(target, range, speed, delay, width, source)
+        if self.Actives[TypeOfPrediction] then
+            if TypeOfPrediction == "Prodiction" then
+                local aoe = false
+                if aoe then
+                    if skillshotType == SPELL_TYPE.LINEAR then
+                        local CastPosition1, info, objects = Prodiction.GetLineAOEPrediction(target, range, speed, delay, width, source)
+                        local WillHit = collision and info.mCollision() and -1 or info.hitchance
+                        NumberOfHits = #objects
+                        CastPosition = CastPosition1
+                        Position = CastPosition1
+                    elseif skillshotType == SPELL_TYPE.CIRCULAR then
+                        local CastPosition1, info, objects = Prodiction.GetCircularAOEPrediction(target, range, speed, delay, width, source)
+                        local WillHit = collision and info.mCollision() and -1 or info.hitchance
+                        NumberOfHits = #objects
+                        CastPosition = CastPosition1
+                        Position = CastPosition1
+                     elseif skillshotType == SPELL_TYPE.CONE then
+                        local CastPosition1, info, objects = Prodiction.GetConeAOEPrediction(target, range, speed, delay, width, source)
+                        local WillHit = collision and info.mCollision() and -1 or info.hitchance
+                        NumberOfHits = #objects
+                        CastPosition = CastPosition1
+                        Position = CastPosition1
+                    end
+                else
+                    local CastPosition1, info = Prodiction.GetPrediction(target, range, speed, delay, width, source)
                     local WillHit = collision and info.mCollision() and -1 or info.hitchance
-                    NumberOfHits = #objects
-                    CastPosition = CastPosition1
-                    Position = CastPosition1
-                elseif skillshotType == SPELL_TYPE.CIRCULAR then
-                    local CastPosition1, info, objects = Prodiction.GetCircularAOEPrediction(target, range, speed, delay, width, source)
-                    local WillHit = collision and info.mCollision() and -1 or info.hitchance
-                    NumberOfHits = #objects
-                    CastPosition = CastPosition1
-                    Position = CastPosition1
-                 elseif skillshotType == SPELL_TYPE.CONE then
-                    local CastPosition1, info, objects = Prodiction.GetConeAOEPrediction(target, range, speed, delay, width, source)
-                    local WillHit = collision and info.mCollision() and -1 or info.hitchance
-                    NumberOfHits = #objects
                     CastPosition = CastPosition1
                     Position = CastPosition1
                 end
-            else
-                local CastPosition1, info = Prodiction.GetPrediction(target, range, speed, delay, width, source)
-                local WillHit = collision and info.mCollision() and -1 or info.hitchance
-                CastPosition = CastPosition1
-                Position = CastPosition1
-            end
-        elseif TypeOfPrediction == "DivinePred" and self.Actives[TypeOfPrediction] then
-            local col = collision and 0 or math.huge
-            if self.BindedSpells[name] == nil then
-                self:BindSpell(sp)
-            else
-                self.BindedSpells[name].range = range
-                self.BindedSpells[name].speed = speed
-                self.BindedSpells[name].radius = width
-                self.BindedSpells[name].delay = delay * 1000
-                self.BindedSpells[name].allowedCollisionCount = col
+            elseif TypeOfPrediction == "DivinePred" then
+                local col = collision and 0 or math.huge
+                if self.BindedSpells[name] == nil then
+                    self:BindSpell(sp)
+                else
+                    self.BindedSpells[name].range = range
+                    self.BindedSpells[name].speed = speed
+                    self.BindedSpells[name].radius = width
+                    self.BindedSpells[name].delay = delay * 1000
+                    self.BindedSpells[name].allowedCollisionCount = col
+                    if skillshotType == SPELL_TYPE.LINEAR then
+                        self.BindedSpells[name].type = SkillShot.TYPE.LINE
+                    elseif skillshotType == SPELL_TYPE.CIRCULAR then
+                        self.BindedSpells[name].type = SkillShot.TYPE.CIRCLE
+                    elseif skillshotType == SPELL_TYPE.CONE then
+                        self.BindedSpells[name].type = SkillShot.TYPE.CONE
+                    end
+                end
+                local state, pos, perc = self.DP:predict(name, target, Vector(source))
+                if state and pos and perc then
+                    --local hitchance = self:AccuracyToHitChance(TypeOfPrediction, accuracy)
+                    --local state, pos, perc = self.DP:predict(DPTarget(target), spell, hitchance, source)
+                    WillHit = ((state == SkillShot.STATUS.SUCCESS_HIT) or self:IsImmobile(target, sp)) 
+                    CastPosition = pos
+                    Position = pos
+                end
+            elseif TypeOfPrediction == "HPrediction" then
+                local tipo = "PromptCircle"
+                local tab = {}
+                range = GetDistance(source, myHero) + range
+                local time = delay + range/speed
+                if sp.IsVeryLowAccuracy ~= nil then
+                    tab.IsVeryLowAccuracy = sp.IsVeryLowAccuracy
+                end
+                if time > 1 and width <= 120 then
+                    tab.IsVeryLowAccuracy = true
+                elseif time > 0.8 and width <= 100 then
+                    tab.IsVeryLowAccuracy = true
+                elseif time > 0.6 and width <= 60 then
+                    tab.IsVeryLowAccuracy = true
+                elseif width <= 40 then
+                    tab.IsVeryLowAccuracy = true
+                end
                 if skillshotType == SPELL_TYPE.LINEAR then
-                    self.BindedSpells[name].type = SkillShot.TYPE.LINE
+                    width = 2 * width
+                    if speed ~= math.huge then 
+                        tipo = "DelayLine"
+                        tab.speed = speed
+                    else
+                        tipo = "PromptLine"
+                    end
+                    if collision then
+                        tab.collisionM = collision
+                        tab.collisionH = collision
+                    end
+                    tab.width = width
                 elseif skillshotType == SPELL_TYPE.CIRCULAR then
-                    self.BindedSpells[name].type = SkillShot.TYPE.CIRCLE
+                    tab.radius = width
+                    if speed ~= math.huge then 
+                        tipo = "DelayCircle"
+                        tab.speed = speed
+                    else
+                        tipo = "PromptCircle"
+                    end
                 elseif skillshotType == SPELL_TYPE.CONE then
-                    self.BindedSpells[name].type = SkillShot.TYPE.CONE
-                end
-            end
-            local state, pos, perc = self.DP:predict(name, target, Vector(source))
-            if state and pos and perc then
-                --local hitchance = self:AccuracyToHitChance(TypeOfPrediction, accuracy)
-                --local state, pos, perc = self.DP:predict(DPTarget(target), spell, hitchance, source)
-                WillHit = ((state == SkillShot.STATUS.SUCCESS_HIT) or self:IsImmobile(target, sp)) 
-                CastPosition = pos
-                Position = pos
-            end
-        elseif TypeOfPrediction == "HPrediction" and self.Actives[TypeOfPrediction] then
-            local tipo = "PromptCircle"
-            local tab = {}
-            range = GetDistance(source, myHero) + range
-            local time = delay + range/speed
-            if sp.IsVeryLowAccuracy ~= nil then
-                tab.IsVeryLowAccuracy = sp.IsVeryLowAccuracy
-            end
-            if time > 1 and width <= 120 then
-                tab.IsVeryLowAccuracy = true
-            elseif time > 0.8 and width <= 100 then
-                tab.IsVeryLowAccuracy = true
-            elseif time > 0.6 and width <= 60 then
-                tab.IsVeryLowAccuracy = true
-            elseif width <= 40 then
-                tab.IsVeryLowAccuracy = true
-            end
-            if skillshotType == SPELL_TYPE.LINEAR then
-                width = 2 * width
-                if speed ~= math.huge then 
-                    tipo = "DelayLine"
+                    tab.angle = width
+                    tipo = "CircularArc"
                     tab.speed = speed
+                    aoe = false
+                end
+                tab.range = range
+                tab.delay = delay
+                tab.type = tipo
+                if aoe then
+                    CastPosition, WillHit, NumberOfHits = self.HP:GetPredict(HPSkillshot(tab), target, Vector(source), aoe)
+                    Position = CastPosition
                 else
-                    tipo = "PromptLine"
+                    CastPosition, WillHit = self.HP:GetPredict(HPSkillshot(tab), target, Vector(source))
+                    Position = CastPosition
                 end
-                if collision then
-                    tab.collisionM = collision
-                    tab.collisionH = collision
-                end
-                tab.width = width
-            elseif skillshotType == SPELL_TYPE.CIRCULAR then
-                tab.radius = width
-                if speed ~= math.huge then 
-                    tipo = "DelayCircle"
-                    tab.speed = speed
-                else
-                    tipo = "PromptCircle"
-                end
-            elseif skillshotType == SPELL_TYPE.CONE then
-                tab.angle = width
-                tipo = "CircularArc"
-                tab.speed = speed
-                aoe = false
-            end
-            tab.range = range
-            tab.delay = delay
-            tab.type = tipo
-            if aoe then
-                CastPosition, WillHit, NumberOfHits = self.HP:GetPredict(HPSkillshot(tab), target, Vector(source), aoe)
-                Position = CastPosition
+            elseif TypeOfPrediction == "SPrediction" then
+                CastPosition, WillHit, Position = self.SP:Predict(target, range, speed, delay, width, collision, source)
             else
-                CastPosition, WillHit = self.HP:GetPredict(HPSkillshot(tab), target, Vector(source))
-                Position = CastPosition
-            end
-        elseif TypeOfPrediction == "SPrediction" and self.Actives[TypeOfPrediction] then
-            CastPosition, WillHit, Position = self.SP:Predict(target, range, speed, delay, width, collision, source)
-        elseif TypeOfPrediction == "VPrediction" and self.Actives[TypeOfPrediction] then
-            if skillshotType == SPELL_TYPE.LINEAR then
-                if aoe then
-                    CastPosition, WillHit, NumberOfHits, Position = self.VP:GetLineAOECastPosition(target, delay, width, range, speed, source)
-                else
-                    CastPosition, WillHit, Position = self.VP:GetLineCastPosition(target, delay, width, range, speed, source, collision)
-                end
-            elseif skillshotType == SPELL_TYPE.CIRCULAR then
-                if aoe then
-                    CastPosition, WillHit, NumberOfHits, Position = self.VP:GetCircularAOECastPosition(target, delay, width, range, speed, source)
-                else
-                    CastPosition, WillHit, Position = self.VP:GetCircularCastPosition(target, delay, width, range, speed, source, collision)
-                end
-             elseif skillshotType == SPELL_TYPE.CONE then
-                if aoe then
-                    CastPosition, WillHit, NumberOfHits, Position = self.VP:GetConeAOECastPosition(target, delay, width, range, speed, source)
-                else
-                    CastPosition, WillHit, Position = self.VP:GetLineCastPosition(target, delay, width, range, speed, source, collision)
+                if skillshotType == SPELL_TYPE.LINEAR then
+                    if aoe then
+                        CastPosition, WillHit, NumberOfHits, Position = self.VP:GetLineAOECastPosition(target, delay, width, range, speed, source)
+                    else
+                        CastPosition, WillHit, Position = self.VP:GetLineCastPosition(target, delay, width, range, speed, source, collision)
+                    end
+                elseif skillshotType == SPELL_TYPE.CIRCULAR then
+                    if aoe then
+                        CastPosition, WillHit, NumberOfHits, Position = self.VP:GetCircularAOECastPosition(target, delay, width, range, speed, source)
+                    else
+                        CastPosition, WillHit, Position = self.VP:GetCircularCastPosition(target, delay, width, range, speed, source, collision)
+                    end
+                 elseif skillshotType == SPELL_TYPE.CONE then
+                    if aoe then
+                        CastPosition, WillHit, NumberOfHits, Position = self.VP:GetConeAOECastPosition(target, delay, width, range, speed, source)
+                    else
+                        CastPosition, WillHit, Position = self.VP:GetLineCastPosition(target, delay, width, range, speed, source, collision)
+                    end
                 end
             end
         end
