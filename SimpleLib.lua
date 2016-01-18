@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.48
+_G.SimpleLibVersion = 1.49
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1626,11 +1626,11 @@ function _Prediction:AccuracyToHitChance(TypeOfPrediction, Accuracy)
     elseif TypeOfPrediction == "HPrediction" then
         return (Accuracy/100) * 3
     elseif TypeOfPrediction == "SPrediction" then
-        if Accuracy >= 90 then
+        if Accuracy >= 65 then
             return 3
-        elseif Accuracy >= 60 then
+        elseif Accuracy >= 45 then
             return 2
-        elseif Accuracy >= 30 then
+        elseif Accuracy >= 25 then
             return 1
         else
             return 0
@@ -1827,6 +1827,9 @@ function _Prediction:GetPrediction(target, sp)
         end
         if WillHit then
             if type(WillHit) == "number" then
+                if sp.IsVeryLowAccuracy then
+                    accuracy = accuracy - 30
+                end
                 WillHit = ((WillHit >= self:AccuracyToHitChance(TypeOfPrediction, accuracy)) or self:IsImmobile(target, sp))
             end
         else
