@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.47
+_G.SimpleLibVersion = 1.48
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1874,14 +1874,17 @@ function _OrbwalkManager:__init()
         if _G.MMA_IsLoaded then
             table.insert(self.OrbwalkList, "MMA")
         end
-        if FileExist(LIB_PATH .. "SxOrbWalk.lua") then
-            table.insert(self.OrbwalkList, "SxOrbWalk")
-        end
         if FileExist(LIB_PATH.."Nebelwolfi's Orb Walker.lua") then
             table.insert(self.OrbwalkList, "NOW")
         end
+        if FileExist(LIB_PATH .. "Pewalk.lua") and FileExist(LIB_PATH .. "PewPacketLib.lua") then
+            table.insert(self.OrbwalkList, "Pewalk")
+        end
         if FileExist(LIB_PATH .. "Big Fat Orbwalker.lua") then
             table.insert(self.OrbwalkList, "Big Fat Walk")
+        end
+        if FileExist(LIB_PATH .. "SxOrbWalk.lua") then
+            table.insert(self.OrbwalkList, "SxOrbWalk")
         end
         if FileExist(LIB_PATH .. "SOW.lua") then
             table.insert(self.OrbwalkList, "SOW")
@@ -2112,6 +2115,7 @@ end
 
 function _OrbwalkManager:OnAnimation(unit, animation)
     if unit and animation then
+        animation = tostring(animation)
         if unit.isMe then
             if self:GetTime() - self.AA.LastTime + self:Latency() < 1 * self:WindUpTime() then
                 if not animation:lower():find("attack") then
@@ -2187,6 +2191,8 @@ function _OrbwalkManager:CanAttack(ExtraTime)
         return _G.MMA_CanAttack()
     elseif self.OrbLoaded == "NOW" then
         return _G.NOWi:TimeToAttack()
+    elseif self.OrbLoaded == "Pewalk" then
+        return _G._Pewalk:CanAttack()
     end
     return self:_CanAttack(ExtraTime)
 end
@@ -2207,6 +2213,8 @@ function _OrbwalkManager:CanMove(ExtraTime)
         return _G.MMA_CanMove()
     elseif self.OrbLoaded == "NOW" then
         return _G.NOWi:TimeToMove()
+    elseif self.OrbLoaded == "Pewalk" then
+        return _G._Pewalk.CanMove()
     end
     return self:_CanMove(ExtraTime)
 end
@@ -2416,7 +2424,7 @@ function _OrbwalkManager:OrbLoad()
                 self:EnableMovement()
                 self:EnableAttacks()
             elseif self:GetOrbwalkSelected() == "SxOrbWalk" then
-                if _G.SxOrb == nil then
+                if not _G.SxOrb then
                     require 'SxOrbWalk'
                     _G.SxOrb:LoadToMenu()
                 end
@@ -2424,7 +2432,7 @@ function _OrbwalkManager:OrbLoad()
                 self:EnableMovement()
                 self:EnableAttacks()
             elseif self:GetOrbwalkSelected() == "SOW" then
-                if _G.SOWi == nil then
+                if not _G.SOWi then
                     require 'SOW'
                     _G.SOWi:LoadToMenu()
                 end
@@ -2435,14 +2443,23 @@ function _OrbwalkManager:OrbLoad()
                 self:EnableMovement()
                 self:EnableAttacks()
             elseif self:GetOrbwalkSelected() == "Big Fat Walk" then
-                require "Big Fat Orbwalker"
+                if not _G["BigFatOrb_Loaded"] then
+                    require "Big Fat Orbwalker"
+                end
                 self.OrbLoaded = self:GetOrbwalkSelected()
                 self:EnableMovement()
                 self:EnableAttacks()
             elseif self:GetOrbwalkSelected() == "NOW" then
-                if _G.NOWi == nil then
+                if not _G.NebelwolfisOrbWalkerInit then
                     require "Nebelwolfi's Orb Walker"
-                    _G.NOWi = NebelwolfisOrbWalker()
+                    _G.NOWi = NebelwolfisOrbWalkerClass()
+                end
+                self.OrbLoaded = self:GetOrbwalkSelected()
+                self:EnableMovement()
+                self:EnableAttacks()
+            elseif self:GetOrbwalkSelected() == "Pewalk" then
+                if not _G._Pewalk then
+                    require "Pewalk"
                 end
                 self.OrbLoaded = self:GetOrbwalkSelected()
                 self:EnableMovement()
@@ -3222,6 +3239,10 @@ function _KeyManager:IsComboPressed()
             if _G.NOWi.Config.k.Combo then
                 return true
             end
+        elseif OrbwalkManager.OrbLoaded == "Pewalk" then
+            if _G._Pewalk.GetActiveMode().Carry then
+                return true
+            end
         end
     end
     return self:IsKeyPressed(self.ComboKeys)
@@ -3251,6 +3272,10 @@ function _KeyManager:IsHarassPressed()
             end
         elseif OrbwalkManager.OrbLoaded == "NOW" then
             if _G.NOWi.Config.k.Harass then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "Pewalk" then
+            if _G._Pewalk.GetActiveMode().Mixed then
                 return true
             end
         end
@@ -3284,6 +3309,10 @@ function _KeyManager:IsClearPressed()
             if _G.NOWi.Config.k.LaneClear then
                 return true
             end
+        elseif OrbwalkManager.OrbLoaded == "Pewalk" then
+            if _G._Pewalk.GetActiveMode().LaneClear then
+                return true
+            end
         end
     end
     return self:IsKeyPressed(self.ClearKeys)
@@ -3313,6 +3342,10 @@ function _KeyManager:IsLastHitPressed()
             end
         elseif OrbwalkManager.OrbLoaded == "NOW" then
             if _G.NOWi.Config.k.LastHit then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "Pewalk" then
+            if _G._Pewalk.GetActiveMode().Farm then
                 return true
             end
         end
