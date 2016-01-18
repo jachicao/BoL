@@ -3874,6 +3874,7 @@ function getSpellType(unit, spellName)
 end
 
 if _G.SimpleLibLoaded == nil then
+    PrintMessage("Changelog: Fixed Nebelwolfi's Orbwalker, Added Pewalk, Fixed some Prediction issues.")
     SpellManager = _SpellManager()
     Prediction = _Prediction()
     CircleManager = _CircleManager()
