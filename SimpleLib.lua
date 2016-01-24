@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.50
+_G.SimpleLibVersion = 1.51
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1877,11 +1877,11 @@ function _OrbwalkManager:__init()
         if _G.MMA_IsLoaded then
             table.insert(self.OrbwalkList, "MMA")
         end
-        if (FileExist(LIB_PATH .. "Pewalk.lua") and FileExist(LIB_PATH .. "PewPacketLib.lua")) or _G._Pewalk then
-            table.insert(self.OrbwalkList, "Pewalk")
-        end
         if FileExist(LIB_PATH.."Nebelwolfi's Orb Walker.lua") or _G.NebelwolfisOrbWalkerInit or _G.NebelwolfisOrbWalkerLoaded then
             table.insert(self.OrbwalkList, "NOW")
+        end
+        if (FileExist(LIB_PATH .. "Pewalk.lua") and FileExist(LIB_PATH .. "PewPacketLib.lua")) or _G._Pewalk then
+            table.insert(self.OrbwalkList, "Pewalk")
         end
         if FileExist(LIB_PATH .. "Big Fat Orbwalker.lua") or _G["BigFatOrb_Loaded"] then
             table.insert(self.OrbwalkList, "Big Fat Walk")
