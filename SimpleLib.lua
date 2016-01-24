@@ -1880,16 +1880,16 @@ function _OrbwalkManager:__init()
         if (FileExist(LIB_PATH .. "Pewalk.lua") and FileExist(LIB_PATH .. "PewPacketLib.lua")) or _G._Pewalk then
             table.insert(self.OrbwalkList, "Pewalk")
         end
-        if FileExist(LIB_PATH.."Nebelwolfi's Orb Walker.lua") then
+        if FileExist(LIB_PATH.."Nebelwolfi's Orb Walker.lua") or _G.NebelwolfisOrbWalkerInit or _G.NebelwolfisOrbWalkerLoaded then
             table.insert(self.OrbwalkList, "NOW")
         end
-        if FileExist(LIB_PATH .. "Big Fat Orbwalker.lua") then
+        if FileExist(LIB_PATH .. "Big Fat Orbwalker.lua") or _G["BigFatOrb_Loaded"] then
             table.insert(self.OrbwalkList, "Big Fat Walk")
         end
-        if FileExist(LIB_PATH .. "SxOrbWalk.lua") then
+        if FileExist(LIB_PATH .. "SxOrbWalk.lua") or _G.SxOrb then
             table.insert(self.OrbwalkList, "SxOrbWalk")
         end
-        if FileExist(LIB_PATH .. "SOW.lua") then
+        if FileExist(LIB_PATH .. "SOW.lua") or _G.SOWi then
             table.insert(self.OrbwalkList, "SOW")
         end
         if _G.OrbwalkManagerMenu == nil then
