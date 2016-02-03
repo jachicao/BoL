@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.51
+_G.SimpleLibVersion = 1.52
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -2002,17 +2002,8 @@ function _OrbwalkManager:__init()
 
     AddCreateObjCallback(
         function(obj)
-            if self.AA.Object == nil and obj.name and obj.valid and tostring(obj.name):lower() == "missile" and self:GetTime() - self.AA.LastTime + self:Latency() < 1.2 * self:WindUpTime() and obj.spellOwner and obj.spellName and obj.spellOwner.isMe and self:IsAutoAttack(tostring(obj.spellName)) then
+            if obj and obj.name and obj.valid and tostring(obj.name):lower() == "missile" and self:GetTime() - self.AA.LastTime + self:Latency() < 1.2 * self:WindUpTime() and obj.spellOwner and obj.spellName and obj.spellOwner.isMe and self:IsAutoAttack(tostring(obj.spellName)) then
                 self:ResetMove()
-                self.AA.Object = obj
-            end
-        end
-    )
-
-    AddDeleteObjCallback(
-        function(obj)
-            if obj and self.AA.Object ~= nil and obj.networkID == self.AA.Object.networkID then
-                self.AA.Object = nil
             end
         end
     )
@@ -2228,7 +2219,7 @@ function _OrbwalkManager:_CanMove(ExtraTime)
 end
 
 function _OrbwalkManager:IsAttacking()
-    return (not self:CanMove()) or (self.AA.Object ~= nil and self.AA.Object.valid)
+    return not self:CanMove()
 end
 
 function _OrbwalkManager:CanCast()
@@ -2456,6 +2447,8 @@ function _OrbwalkManager:OrbLoad()
                 if not _G.NebelwolfisOrbWalkerInit then
                     require "Nebelwolfi's Orb Walker"
                     _G.NOWi = NebelwolfisOrbWalkerClass()
+                else
+                    _G.NOWi = _G.NebelwolfisOrbWalker
                 end
                 self.OrbLoaded = self:GetOrbwalkSelected()
                 self:EnableMovement()
@@ -2497,7 +2490,6 @@ end
 
 function _OrbwalkManager:ResetMove()
     self.AA.LastTime = self:GetTime() + self:Latency() - self:WindUpTime()
-    self.AA.Object = nil
 end
 
 function _OrbwalkManager:ResetAA()
@@ -3874,7 +3866,8 @@ function getSpellType(unit, spellName)
 end
 
 if _G.SimpleLibLoaded == nil then
-    PrintMessage("Changelog: Fixed Nebelwolfi's Orbwalker, Added Pewalk, Fixed some Prediction issues.")
+    PrintMessage("Changelog 1: Added Pewalk, Fixed some Prediction issues.")
+    PrintMessage("Changelog 2: Fixed NOW.")
     SpellManager = _SpellManager()
     Prediction = _Prediction()
     CircleManager = _CircleManager()
@@ -3887,6 +3880,7 @@ if _G.SimpleLibLoaded == nil then
         EnemiesInGame[tostring(enemy.charName)] = true
     end
     if EnemiesInGame["Yasuo"] then 
+        --[[
         AddProcessSpellCallback(
             function(unit, spell)
                 if myHero.dead then return end
@@ -3919,7 +3913,7 @@ if _G.SimpleLibLoaded == nil then
                     end
                 end
             end
-        )
+        )]]
     end
     _G.SimpleLibLoaded = true
 end
