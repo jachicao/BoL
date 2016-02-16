@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.52
+_G.SimpleLibVersion = 1.53
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1880,7 +1880,7 @@ function _OrbwalkManager:__init()
         if FileExist(LIB_PATH.."Nebelwolfi's Orb Walker.lua") or _G.NebelwolfisOrbWalkerInit or _G.NebelwolfisOrbWalkerLoaded then
             table.insert(self.OrbwalkList, "NOW")
         end
-        if (FileExist(LIB_PATH .. "Pewalk.lua") and FileExist(LIB_PATH .. "PewPacketLib.lua")) or _G._Pewalk then
+        if (FileExist(LIB_PATH .. "Pewalk.lua")) or _G._Pewalk then
             table.insert(self.OrbwalkList, "Pewalk")
         end
         if FileExist(LIB_PATH .. "Big Fat Orbwalker.lua") or _G["BigFatOrb_Loaded"] then
@@ -2186,7 +2186,7 @@ function _OrbwalkManager:CanAttack(ExtraTime)
     elseif self.OrbLoaded == "NOW" then
         return _G.NOWi:TimeToAttack()
     elseif self.OrbLoaded == "Pewalk" then
-        return _G._Pewalk:CanAttack()
+        return _G._Pewalk.CanAttack()
     end
     return self:_CanAttack(ExtraTime)
 end
@@ -2428,11 +2428,11 @@ function _OrbwalkManager:OrbLoad()
             elseif self:GetOrbwalkSelected() == "SOW" then
                 if not _G.SOWi then
                     require 'SOW'
-                    _G.SOWi:LoadToMenu()
                 end
                 self.OrbLoaded = self:GetOrbwalkSelected()
                 if _G.VP then
                     _G.SOWi = SOW(_G.VP)
+                    _G.SOWi:LoadToMenu()
                 end
                 self:EnableMovement()
                 self:EnableAttacks()
@@ -3866,8 +3866,7 @@ function getSpellType(unit, spellName)
 end
 
 if _G.SimpleLibLoaded == nil then
-    PrintMessage("Changelog 1: Added Pewalk, Fixed some Prediction issues.")
-    PrintMessage("Changelog 2: Fixed NOW.")
+    PrintMessage("Changelog 1: Fixed Pewalk.")
     SpellManager = _SpellManager()
     Prediction = _Prediction()
     CircleManager = _CircleManager()
