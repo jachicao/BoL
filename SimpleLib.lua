@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.53
+_G.SimpleLibVersion = 1.54
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1477,18 +1477,21 @@ function _Prediction:__init()
         table.insert(self.PredictionList, "Prodiction")
         self.Actives["Prodiction"] = true
     end ]]
+    if FileExist(LIB_PATH.."KPrediction.lua") then
+        table.insert(self.PredictionList, "KPrediction") 
+    end
     if FileExist(LIB_PATH.."HPrediction.lua") then
         table.insert(self.PredictionList, "HPrediction") 
-        --PrintMessage("Temporary disabled HPrediction due to investigation about bugsplats, will be enabled soon.")
     end
     if VIP_USER and FileExist(LIB_PATH.."DivinePred.lua") and FileExist(LIB_PATH.."DivinePred.luac") then
         table.insert(self.PredictionList, "DivinePred") 
         self.BindedSpells = {}
-        --PrintMessage("Temporary disabled DivinePred due to investigation about bugsplats, will be enabled soon.")
     end
     if FileExist(LIB_PATH.."SPrediction.lua") and FileExist(LIB_PATH.."Collision.lua") then
         table.insert(self.PredictionList, "SPrediction") 
-        --PrintMessage("Temporary disabled SPrediction due of investigation about bugsplats, will be enabled soon.")
+    end
+    if _G.FHPrediction then
+        table.insert(self.PredictionList, "FHPrediction")
     end
     self.LastRequest = 0
     local ImmobileBuffs = {
@@ -1527,28 +1530,58 @@ function _Prediction:LoadPrediction(TypeOfPrediction)
     if TypeOfPrediction == "VPrediction" then
     elseif TypeOfPrediction == "Prodiction" then
     elseif TypeOfPrediction == "DivinePred" then
-        if self.DP == nil then
-            require "DivinePred"
+        if _G.DP then
+            self.DP = _G.DP
             self.Actives["DivinePred"] = true
-            self.DP = DivinePred()
-            _G.DP = self.DP
+            DelayAction(function()
+                PrintMessage("DivinePred is causing a lot of fps drops, take care!")
+            end, 0.8)
+        else
+            require "DivinePred"
+            _G.DP = DivinePred()
+            self.DP = _G.DP
+            self.Actives["DivinePred"] = true
             DelayAction(function()
                 PrintMessage("DivinePred is causing a lot of fps drops, take care!")
             end, 0.8)
         end
     elseif TypeOfPrediction == "HPrediction" then
-        if self.HP == nil then
-            require "HPrediction"
+        if _G.HP then
+            self.HP = _G.HP
             self.Actives["HPrediction"] = true
-            self.HP = HPrediction()
-            _G.HP = self.HP
+        else
+            require "HPrediction"
+            _G.HP = HPrediction()
+            self.HP = _G.HP
+            self.Actives["HPrediction"] = true
+        end
+    elseif TypeOfPrediction == "KPrediction" then
+        if _G.KP then
+            self.Actives["KPrediction"] = true
+        else
+            require "KPrediction"
+            _G.KP = KPrediction()
+            self.KP = _G.KP
+            self.Actives["KPrediction"] = true
         end
     elseif TypeOfPrediction == "SPrediction" then
-        if self.SP == nil then
-            require "SPrediction"
+        if _G.SP then
+            self.SP = _G.SP
             self.Actives["SPrediction"] = true
-            self.SP = SPrediction()
-            _G.SP = self.SP
+        else
+            require "SPrediction"
+            _G.SP = SPrediction()
+            self.SP = _G.SP
+            self.Actives["SPrediction"] = true
+        end
+    elseif TypeOfPrediction == "FHPrediction" then
+        if _G.FHPrediction then
+            self.FHP = _G.FHPrediction
+            self.Actives["FHPrediction"] = true
+        else
+            require "FHPrediction"
+            self.FHP = _G.FHPrediction
+            self.Actives["FHPrediction"] = true
         end
     end
 end
@@ -1591,27 +1624,7 @@ function _Prediction:ValidRequest(TypeOfPrediction)
 end
 
 function _Prediction:AccuracyToHitChance(TypeOfPrediction, Accuracy)
-    if TypeOfPrediction == "VPrediction" then
-        if Accuracy >= 90 then
-            return 3
-        elseif Accuracy >= 60 then
-            return 2
-        elseif Accuracy >= 30 then
-            return 1
-        else
-            return 0
-        end
-    elseif TypeOfPrediction == "Prodiction" then
-        if Accuracy >= 90 then
-            return 3
-        elseif Accuracy >= 60 then
-            return 2
-        elseif Accuracy >= 30 then
-            return 1
-        else
-            return 0
-        end
-    elseif TypeOfPrediction == "DivinePred" then
+    if TypeOfPrediction == "DivinePred" then
         if Accuracy >= 90 then
             return math.max((Accuracy / 2)/100 + 1 - 0, 1)
         elseif Accuracy >= 80 then
@@ -1625,6 +1638,8 @@ function _Prediction:AccuracyToHitChance(TypeOfPrediction, Accuracy)
         end
     elseif TypeOfPrediction == "HPrediction" then
         return (Accuracy/100) * 3
+    elseif TypeOfPrediction == "KPrediction" then
+        return (Accuracy/100)
     elseif TypeOfPrediction == "SPrediction" then
         if Accuracy >= 65 then
             return 3
@@ -1635,21 +1650,25 @@ function _Prediction:AccuracyToHitChance(TypeOfPrediction, Accuracy)
         else
             return 0
         end
+    elseif TypeOfPrediction == "FHPrediction" then
+
+    end
+    if Accuracy >= 90 then
+        return 3
+    elseif Accuracy >= 60 then
+        return 2
+    elseif Accuracy >= 30 then
+        return 1
+    else
+        return 0
     end
 end
 
 function _Prediction:TimeRequest(TypeOfPrediction)
-    if TypeOfPrediction == "VPrediction" then
-        return 0
-    elseif TypeOfPrediction == "Prodiction" then
-        return 0
-    elseif TypeOfPrediction == "DivinePred" then
+    if TypeOfPrediction == "DivinePred" then
         return 0.15
-    elseif TypeOfPrediction == "HPrediction" then
-        return 0
-    elseif TypeOfPrediction == "SPrediction" then
-        return 0
     end
+    return 0
 end
 
 function _Prediction:IsImmobile(target, sp)
@@ -1801,8 +1820,75 @@ function _Prediction:GetPrediction(target, sp)
                     CastPosition, WillHit = self.HP:GetPredict(HPSkillshot(tab), target, Vector(source))
                     Position = CastPosition
                 end
+            elseif TypeOfPrediction == "KPrediction" then
+                local tipo = "PromptCircle"
+                local tab = {}
+                range = GetDistance(source, myHero) + range
+                if skillshotType == SPELL_TYPE.LINEAR then
+                    width = 2 * width
+                    if speed ~= math.huge then 
+                        tipo = "DelayLine"
+                        tab.speed = speed
+                    else
+                        tipo = "PromptLine"
+                    end
+                    if collision then
+                        tab.collision_H = collision
+                        tab.collision_M = collision
+                    end
+                    tab.width = width
+                elseif skillshotType == SPELL_TYPE.CIRCULAR then
+                    tab.radius = width
+                    if speed ~= math.huge then 
+                        tipo = "DelayCircle"
+                        tab.speed = speed
+                    else
+                        tipo = "PromptCircle"
+                    end
+                elseif skillshotType == SPELL_TYPE.CONE then
+                    tab.angle = width
+                    tipo = "CircularArc"
+                    tab.speed = speed
+                    aoe = false
+                end
+                tab.range = range
+                tab.delay = delay
+                tab.type = tipo
+                CastPosition, WillHit = self.KP:GetPrediction(KPSkillshot(tab), target, Vector(source))
+                Position = CastPosition
             elseif TypeOfPrediction == "SPrediction" then
                 CastPosition, WillHit, Position = self.SP:Predict(target, range, speed, delay, width, collision, source)
+            elseif TypeOfPrediction == "FHPrediction" then
+                local tipo = SkillShotType.SkillshotCircle
+                local tab = {}
+                tab.aoe = aoe
+                if skillshotType == SPELL_TYPE.LINEAR then
+                    radius = width / 2
+                    if speed ~= math.huge then 
+                        tipo = SkillShotType.SkillshotMissileLine
+                    else
+                        tipo = SkillShotType.SkillshotLine
+                    end
+                    if collision then
+                        tab.collision = {
+                            [CollisionObjectTypes.Champion] = true, 
+                            [CollisionObjectTypes.Minion] = true, 
+                            [CollisionObjectTypes.YasuoWall] = true 
+                        }
+                    end
+                elseif skillshotType == SPELL_TYPE.CIRCULAR then
+                    tab.radius = width
+                    tipo = SkillShotType.SkillshotCircle
+                elseif skillshotType == SPELL_TYPE.CONE then
+                    tab.angle = width
+                    tipo = SkillShotType.SkillshotCone
+                end
+                tab.range = range
+                tab.delay = delay
+                tab.speed = speed
+                tab.type = tipo
+                CastPosition, WillHit = self.FHP:GetPrediction(tab, target, Vector(source))
+                Position = CastPosition
             else
                 if skillshotType == SPELL_TYPE.LINEAR then
                     if aoe then
@@ -1877,19 +1963,37 @@ function _OrbwalkManager:__init()
         if _G.MMA_IsLoaded then
             table.insert(self.OrbwalkList, "MMA")
         end
-        if FileExist(LIB_PATH.."Nebelwolfi's Orb Walker.lua") or _G.NebelwolfisOrbWalkerInit or _G.NebelwolfisOrbWalkerLoaded then
-            table.insert(self.OrbwalkList, "NOW")
-        end
-        if (FileExist(LIB_PATH .. "Pewalk.lua")) or _G._Pewalk then
+        if _G._Pewalk then
             table.insert(self.OrbwalkList, "Pewalk")
         end
-        if FileExist(LIB_PATH .. "Big Fat Orbwalker.lua") or _G["BigFatOrb_Loaded"] then
+        if _G.NebelwolfisOrbWalkerInit or _G.NebelwolfisOrbWalkerLoaded then
+            table.insert(self.OrbwalkList, "NOW")
+        end
+        if _G.S1 or _G.S1mpleOrbLoaded or _G.S1OrbLoading then
+            table.insert(self.OrbwalkList, "S1mpleOrbWalker")
+        end
+        if _G.SOWi then
+            table.insert(self.OrbwalkList, "SOW")
+        end
+        if _G["BigFatOrb_Loaded"] then
             table.insert(self.OrbwalkList, "Big Fat Walk")
         end
-        if FileExist(LIB_PATH .. "SxOrbWalk.lua") or _G.SxOrb then
+        if _G.SxOrb then
             table.insert(self.OrbwalkList, "SxOrbWalk")
         end
-        if FileExist(LIB_PATH .. "SOW.lua") or _G.SOWi then
+        if FileExist(LIB_PATH.."Nebelwolfi's Orb Walker.lua") and not (_G.NebelwolfisOrbWalkerInit or _G.NebelwolfisOrbWalkerLoaded) then
+            table.insert(self.OrbwalkList, "NOW")
+        end
+        if FileExist(LIB_PATH.."S1mpleOrbWalker.lua") and not (_G.S1 or _G.S1mpleOrbLoaded or _G.S1OrbLoading) then
+            table.insert(self.OrbwalkList, "S1mpleOrbWalker")
+        end
+        if FileExist(LIB_PATH .. "Big Fat Orbwalker.lua") and not _G["BigFatOrb_Loaded"] then
+            table.insert(self.OrbwalkList, "Big Fat Walk")
+        end
+        if FileExist(LIB_PATH .. "SxOrbWalk.lua") and not _G.SxOrb then
+            table.insert(self.OrbwalkList, "SxOrbWalk")
+        end
+        if FileExist(LIB_PATH .. "SOW.lua") and not _G.SOWi then
             table.insert(self.OrbwalkList, "SOW")
         end
         if _G.OrbwalkManagerMenu == nil then
@@ -2187,6 +2291,8 @@ function _OrbwalkManager:CanAttack(ExtraTime)
         return _G.NOWi:TimeToAttack()
     elseif self.OrbLoaded == "Pewalk" then
         return _G._Pewalk.CanAttack()
+    elseif self.OrbLoaded == "S1mpleOrbWalker" then
+        return _G.S1:canAA()
     end
     return self:_CanAttack(ExtraTime)
 end
@@ -2209,6 +2315,8 @@ function _OrbwalkManager:CanMove(ExtraTime)
         return _G.NOWi:TimeToMove()
     elseif self.OrbLoaded == "Pewalk" then
         return _G._Pewalk.CanMove()
+    elseif self.OrbLoaded == "S1mpleOrbWalker" then
+        return _G.S1:canMove()
     end
     return self:_CanMove(ExtraTime)
 end
@@ -2444,7 +2552,7 @@ function _OrbwalkManager:OrbLoad()
                 self:EnableMovement()
                 self:EnableAttacks()
             elseif self:GetOrbwalkSelected() == "NOW" then
-                if not _G.NebelwolfisOrbWalkerInit then
+                if not (_G.NebelwolfisOrbWalkerInit or _G.NebelwolfisOrbWalkerLoaded) then
                     require "Nebelwolfi's Orb Walker"
                     _G.NOWi = NebelwolfisOrbWalkerClass()
                 else
@@ -2456,6 +2564,15 @@ function _OrbwalkManager:OrbLoad()
             elseif self:GetOrbwalkSelected() == "Pewalk" then
                 if not _G._Pewalk then
                     require "Pewalk"
+                end
+                self.OrbLoaded = self:GetOrbwalkSelected()
+                self:EnableMovement()
+                self:EnableAttacks()
+            elseif self:GetOrbwalkSelected() == "S1mpleOrbWalker" then
+                if not (_G.S1 or _G.S1mpleOrbLoaded or _G.S1OrbLoading) then
+                    require "S1mpleOrbWalker"
+                    _G.S1 = S1mpleOrbWalker()
+                    _G.S1:AddToMenu(scriptConfig("S1mpleOrbWalker", "S1mpleOrbWalker".."24052015"..tostring(myHero.charName)))
                 end
                 self.OrbLoaded = self:GetOrbwalkSelected()
                 self:EnableMovement()
@@ -2505,6 +2622,8 @@ function _OrbwalkManager:ResetAA()
         _G.NOWi.orbTable.lastAA = os.clock() - GetLatency() / 2000 - _G.NOWi.orbTable.animation
     elseif self.OrbLoaded == "MMA" then
         _G.MMA_ResetAutoAttack()
+    elseif self.OrbLoaded == "S1mpleOrbWalker" then
+        return _G.S1:ResetAA()
     end
 end
 
@@ -2527,6 +2646,9 @@ function _OrbwalkManager:DisableMovement()
             self.Move = false
         elseif self.OrbLoaded == "NOW" then
             _G.NOWi:SetMove(false)
+            self.Move = false
+        elseif self.OrbLoaded == "S1mpleOrbWalker" then
+            _G.S1.allowedtoMove = false
             self.Move = false
         end
     end
@@ -2552,6 +2674,9 @@ function _OrbwalkManager:EnableMovement()
         elseif self.OrbLoaded == "NOW" then
             _G.NOWi:SetMove(true)
             self.Move = true
+        elseif self.OrbLoaded == "S1mpleOrbWalker" then
+            _G.S1.allowedtoMove = true
+            self.Move = true
         end
     end
 end
@@ -2576,6 +2701,9 @@ function _OrbwalkManager:DisableAttacks()
         elseif self.OrbLoaded == "NOW" then
             _G.NOWi:SetAA(false)
             self.Attack = false
+        elseif self.OrbLoaded == "S1mpleOrbWalker" then
+            _G.S1.allowedtoAA = false
+            self.Attack = false
         end
     end
 end
@@ -2599,6 +2727,9 @@ function _OrbwalkManager:EnableAttacks()
             self.Attack = true
         elseif self.OrbLoaded == "NOW" then
             _G.NOWi:SetAA(true)
+            self.Attack = true
+        elseif self.OrbLoaded == "S1mpleOrbWalker" then
+            _G.S1.allowedtoAA = true
             self.Attack = true
         end
     end
@@ -3238,6 +3369,10 @@ function _KeyManager:IsComboPressed()
             if _G._Pewalk.GetActiveMode().Carry then
                 return true
             end
+        elseif OrbwalkManager.OrbLoaded == "S1mpleOrbWalker" then
+            if _G.S1.aamode == "sbtw" then
+                return true
+            end
         end
     end
     return self:IsKeyPressed(self.ComboKeys)
@@ -3271,6 +3406,10 @@ function _KeyManager:IsHarassPressed()
             end
         elseif OrbwalkManager.OrbLoaded == "Pewalk" then
             if _G._Pewalk.GetActiveMode().Mixed then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "S1mpleOrbWalker" then
+            if _G.S1.aamode == "harass" then
                 return true
             end
         end
@@ -3308,6 +3447,10 @@ function _KeyManager:IsClearPressed()
             if _G._Pewalk.GetActiveMode().LaneClear then
                 return true
             end
+        elseif OrbwalkManager.OrbLoaded == "S1mpleOrbWalker" then
+            if _G.S1.aamode == "laneclear" then
+                return true
+            end
         end
     end
     return self:IsKeyPressed(self.ClearKeys)
@@ -3341,6 +3484,10 @@ function _KeyManager:IsLastHitPressed()
             end
         elseif OrbwalkManager.OrbLoaded == "Pewalk" then
             if _G._Pewalk.GetActiveMode().Farm then
+                return true
+            end
+        elseif OrbwalkManager.OrbLoaded == "S1mpleOrbWalker" then
+            if _G.S1.aamode == "lasthit" then
                 return true
             end
         end
@@ -3866,7 +4013,7 @@ function getSpellType(unit, spellName)
 end
 
 if _G.SimpleLibLoaded == nil then
-    PrintMessage("Changelog 1: Fixed Pewalk.")
+    PrintMessage("Changelog: Added FHPrediction and KPrediction. Added S1mple OrbWalker.")
     SpellManager = _SpellManager()
     Prediction = _Prediction()
     CircleManager = _CircleManager()
