@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.54
+_G.SimpleLibVersion = 1.55
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1444,9 +1444,11 @@ function _Prediction:__init()
     self.Actives = {
         ["VPrediction"] = false,
         ["HPrediction"] = false,
+        ["KPrediction"] = false,
         ["DivinePred"] = false,
         ["SPrediction"] = false,
         ["Prodiction"] = false,
+        ["FHPrediction"] = false,
     }
     if FileExist(LIB_PATH.."VPrediction.lua") then
         table.insert(self.PredictionList, "VPrediction")
@@ -1651,7 +1653,15 @@ function _Prediction:AccuracyToHitChance(TypeOfPrediction, Accuracy)
             return 0
         end
     elseif TypeOfPrediction == "FHPrediction" then
-
+        if Accuracy >= 65 then
+            return 3
+        elseif Accuracy >= 45 then
+            return 2
+        elseif Accuracy >= 25 then
+            return 1
+        else
+            return 0
+        end
     end
     if Accuracy >= 90 then
         return 3
@@ -1863,7 +1873,7 @@ function _Prediction:GetPrediction(target, sp)
                 local tab = {}
                 tab.aoe = aoe
                 if skillshotType == SPELL_TYPE.LINEAR then
-                    radius = width / 2
+                    tab.radius = width / 2
                     if speed ~= math.huge then 
                         tipo = SkillShotType.SkillshotMissileLine
                     else
@@ -1887,7 +1897,7 @@ function _Prediction:GetPrediction(target, sp)
                 tab.delay = delay
                 tab.speed = speed
                 tab.type = tipo
-                CastPosition, WillHit = self.FHP:GetPrediction(tab, target, Vector(source))
+                CastPosition, WillHit = self.FHP.GetPrediction(tab, target, Vector(source))
                 Position = CastPosition
             else
                 if skillshotType == SPELL_TYPE.LINEAR then
@@ -1963,7 +1973,7 @@ function _OrbwalkManager:__init()
         if _G.MMA_IsLoaded then
             table.insert(self.OrbwalkList, "MMA")
         end
-        if _G._Pewalk then
+        if _G._Pewalk and VIP_USER then
             table.insert(self.OrbwalkList, "Pewalk")
         end
         if _G.NebelwolfisOrbWalkerInit or _G.NebelwolfisOrbWalkerLoaded then
@@ -2647,6 +2657,9 @@ function _OrbwalkManager:DisableMovement()
         elseif self.OrbLoaded == "NOW" then
             _G.NOWi:SetMove(false)
             self.Move = false
+        elseif self.OrbLoaded == "Pewalk" then
+            _G._Pewalk.AllowMove(false)
+            self.Move = false
         elseif self.OrbLoaded == "S1mpleOrbWalker" then
             _G.S1.allowedtoMove = false
             self.Move = false
@@ -2673,6 +2686,9 @@ function _OrbwalkManager:EnableMovement()
             self.Move = true
         elseif self.OrbLoaded == "NOW" then
             _G.NOWi:SetMove(true)
+            self.Move = true
+        elseif self.OrbLoaded == "Pewalk" then
+            _G._Pewalk.AllowMove(true)
             self.Move = true
         elseif self.OrbLoaded == "S1mpleOrbWalker" then
             _G.S1.allowedtoMove = true
@@ -2701,6 +2717,9 @@ function _OrbwalkManager:DisableAttacks()
         elseif self.OrbLoaded == "NOW" then
             _G.NOWi:SetAA(false)
             self.Attack = false
+        elseif self.OrbLoaded == "Pewalk" then
+            _G._Pewalk.AllowAttack(false)
+            self.Attack = false
         elseif self.OrbLoaded == "S1mpleOrbWalker" then
             _G.S1.allowedtoAA = false
             self.Attack = false
@@ -2727,6 +2746,9 @@ function _OrbwalkManager:EnableAttacks()
             self.Attack = true
         elseif self.OrbLoaded == "NOW" then
             _G.NOWi:SetAA(true)
+            self.Attack = true
+        elseif self.OrbLoaded == "Pewalk" then
+            _G._Pewalk.AllowAttack(true)
             self.Attack = true
         elseif self.OrbLoaded == "S1mpleOrbWalker" then
             _G.S1.allowedtoAA = true
