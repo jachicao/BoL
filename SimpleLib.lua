@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.55
+_G.SimpleLibVersion = 1.56
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1200,10 +1200,10 @@ function _Spell:Damage(target, stage)
         if self.DamageName == "SMITE" then
             if IsValidTarget(target) then
                 if target.type == myHero.type then
-                    local name = self:GetSpellData() ~= nil and self:GetSpellData().name ~= nil and self:GetSpellData().name or ""
-                    if name:lower():find("smiteduel") then
+                    local name = self:GetSpellData() ~= nil and tostring(self:GetSpellData().name):lower() or ""
+                    if name:find("smiteduel") then
                         return getDmg("SMITESS", target, myHero, stage)
-                    elseif name:lower():find("smiteplayerganker") then
+                    elseif name:find("smiteplayerganker") then
                         return getDmg("SMITESB", target, myHero, stage)
                     end
                 else
@@ -1492,7 +1492,7 @@ function _Prediction:__init()
     if FileExist(LIB_PATH.."SPrediction.lua") and FileExist(LIB_PATH.."Collision.lua") then
         table.insert(self.PredictionList, "SPrediction") 
     end
-    if _G.FHPrediction then
+    if _G.FHPrediction or FileExist(LIB_PATH.."FHPrediction.lua") then
         table.insert(self.PredictionList, "FHPrediction")
     end
     self.LastRequest = 0
