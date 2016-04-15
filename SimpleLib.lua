@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.56
+_G.SimpleLibVersion = 1.57
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -532,17 +532,24 @@ function _AutoSmite:__init()
             self.JungleMinions = minionManager(MINION_JUNGLE, self.Spell.Range + 100, myHero, MINION_SORT_MAXHEALTH_DEC)
             _G.SimpleAutoSmite = scriptConfig("SimpleLib - Auto Smite", "SimpleAutoSmite".."07072015"..tostring(myHero.charName))
             _G.SimpleAutoSmite:addParam("Baron", "Use Smite on Dragon/Baron", SCRIPT_PARAM_ONOFF, true)
+            _G.SimpleAutoSmite:addParam("Red", "Use Smite on Red", SCRIPT_PARAM_ONOFF, false)
+            _G.SimpleAutoSmite:addParam("Blue", "Use Smite on Blue", SCRIPT_PARAM_ONOFF, false)
             _G.SimpleAutoSmite:addParam("Killsteal", "Use Smite to Killsteal", SCRIPT_PARAM_ONOFF, true)
             AddTickCallback(
                 function()
                     if self.Spell:IsReady() then
-                        if _G.SimpleAutoSmite.Baron then
-                            self.JungleMinions:update()
-                            for i, minion in pairs(self.JungleMinions.objects) do
-                                if self.Spell:ValidTarget(minion) and minion.health > 0 and (tostring(minion.charName):lower():find("dragon") or tostring(minion.charName):lower():find("baron")) then
-                                    if self.Spell:Damage(minion) > minion.health then
-                                        self.Spell:Cast(minion)
-                                    end
+                        self.JungleMinions:update()
+                        for i, minion in pairs(self.JungleMinions.objects) do
+                            if self.Spell:ValidTarget(minion) and minion.health > 0 and self.Spell:Damage(minion) > minion.health then
+                                local charName = tostring(minion.charName):lower()
+                                if _G.SimpleAutoSmite.Baron and (charName:find("dragon") or charName:find("baron")) then
+                                    self.Spell:Cast(minion)
+                                end
+                                if _G.SimpleAutoSmite.Red and charName == "sru_red" then
+                                    self.Spell:Cast(minion)
+                                end
+                                if _G.SimpleAutoSmite.Blue and charName == "sru_blue" then
+                                    self.Spell:Cast(minion)
                                 end
                             end
                         end
