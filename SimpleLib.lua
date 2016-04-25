@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.57
+_G.SimpleLibVersion = 1.58
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -2571,7 +2571,8 @@ function _OrbwalkManager:OrbLoad()
             elseif self:GetOrbwalkSelected() == "NOW" then
                 if not (_G.NebelwolfisOrbWalkerInit or _G.NebelwolfisOrbWalkerLoaded) then
                     require "Nebelwolfi's Orb Walker"
-                    _G.NOWi = NebelwolfisOrbWalkerClass()
+                    NebelwolfisOrbWalkerClass()
+                    _G.NOWi = _G.NebelwolfisOrbWalker
                 else
                     _G.NOWi = _G.NebelwolfisOrbWalker
                 end
