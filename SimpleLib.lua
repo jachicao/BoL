@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.58
+_G.SimpleLibVersion = 1.59
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1660,15 +1660,7 @@ function _Prediction:AccuracyToHitChance(TypeOfPrediction, Accuracy)
             return 0
         end
     elseif TypeOfPrediction == "FHPrediction" then
-        if Accuracy >= 65 then
-            return 3
-        elseif Accuracy >= 45 then
-            return 2
-        elseif Accuracy >= 25 then
-            return 1
-        else
-            return 0
-        end
+        return 0.7 + Accuracy / 100
     end
     if Accuracy >= 90 then
         return 3
