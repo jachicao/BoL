@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.59
+_G.SimpleLibVersion = 1.60
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1872,7 +1872,7 @@ function _Prediction:GetPrediction(target, sp)
                 local tab = {}
                 tab.aoe = aoe
                 if skillshotType == SPELL_TYPE.LINEAR then
-                    tab.radius = width / 2
+                    tab.radius = width --/ 2
                     if speed ~= math.huge then 
                         tipo = SkillShotType.SkillshotMissileLine
                     else
