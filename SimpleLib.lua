@@ -3875,7 +3875,7 @@ end
 
 function _SimpleTargetSelector:AddToMenu(Menu)
     if Menu then
-        Menu:addSubMenu(myHero.charName.." - Target Selector Settings", "TS")
+        Menu:addSubMenu("Target Selector Settings", "TS")
         self.Menu = Menu.TS
         self.Menu:addTS(self.TS)
         _Circle({Menu = self.Menu, Name = "Draw", Text = "Draw circle on Target", Source = function() return self.target end, Range = 120, Condition = function() return ValidTarget(self.target) end, Color = {255, 255, 0, 0}, Width = 4})
