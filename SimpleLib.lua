@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.60
+_G.SimpleLibVersion = 1.70
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1456,6 +1456,7 @@ function _Prediction:__init()
         ["SPrediction"] = false,
         ["Prodiction"] = false,
         ["FHPrediction"] = false,
+        ["TRPrediction"] = false,
     }
     if FileExist(LIB_PATH.."VPrediction.lua") then
         table.insert(self.PredictionList, "VPrediction")
@@ -1501,6 +1502,9 @@ function _Prediction:__init()
     end
     if _G.FHPrediction or FileExist(LIB_PATH.."FHPrediction.lua") then
         table.insert(self.PredictionList, "FHPrediction")
+    end
+    if FileExist(LIB_PATH.."TRPrediction.lua") then
+        table.insert(self.PredictionList, "TRPrediction") 
     end
     self.LastRequest = 0
     local ImmobileBuffs = {
@@ -1592,6 +1596,16 @@ function _Prediction:LoadPrediction(TypeOfPrediction)
             self.FHP = _G.FHPrediction
             self.Actives["FHPrediction"] = true
         end
+    elseif TypeOfPrediction == "TRPrediction" then
+        if _G.TRP then
+            self.TRP = _G.TRP
+            self.Actives["TRPrediction"] = true
+        else
+            require "TRPrediction"
+            _G.TRP = TRPrediction()
+            self.TRP = _G.TRP
+            self.Actives["TRPrediction"] = true
+        end
     end
 end
 
@@ -1661,6 +1675,8 @@ function _Prediction:AccuracyToHitChance(TypeOfPrediction, Accuracy)
         end
     elseif TypeOfPrediction == "FHPrediction" then
         return 0.7 + Accuracy / 100
+    elseif TypeOfPrediction == "TRPrediction" then
+        return (Accuracy/100) * 2.5
     end
     if Accuracy >= 90 then
         return 3
@@ -1897,6 +1913,29 @@ function _Prediction:GetPrediction(target, sp)
                 tab.speed = speed
                 tab.type = tipo
                 CastPosition, WillHit = self.FHP.GetPrediction(tab, target, Vector(source))
+                Position = CastPosition
+            elseif TypeOfPrediction == "TRPrediction" then
+                local tipo = "IsRadial"
+                local tab = {}
+                if skillshotType == SPELL_TYPE.LINEAR then
+                    width = 2 * width
+                    tipo = "IsLinear"
+                    if collision then
+                        Collision = true
+                    end
+                    tab.width = width
+                elseif skillshotType == SPELL_TYPE.CIRCULAR then
+                    tab.radius = width
+                    tipo = "IsRadial"
+                elseif skillshotType == SPELL_TYPE.CONE then
+                    tab.angle = width
+                    tipo = "IsConic"
+                end
+                tab.speed = speed
+                tab.range = range
+                tab.delay = delay
+                tab.type = tipo
+                CastPosition, WillHit, Collision = self.TRP:GetPrediction(TR_BindSS(tab), target, Vector(source))
                 Position = CastPosition
             else
                 if skillshotType == SPELL_TYPE.LINEAR then
@@ -4035,7 +4074,7 @@ function getSpellType(unit, spellName)
 end
 
 if _G.SimpleLibLoaded == nil then
-    PrintMessage("Changelog: Added FHPrediction and KPrediction. Added S1mple OrbWalker.")
+    PrintMessage("Changelog: Added Turkish Prediction.")
     SpellManager = _SpellManager()
     Prediction = _Prediction()
     CircleManager = _CircleManager()
