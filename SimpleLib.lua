@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.70
+_G.SimpleLibVersion = 1.80
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1920,9 +1920,6 @@ function _Prediction:GetPrediction(target, sp)
                 if skillshotType == SPELL_TYPE.LINEAR then
                     width = 2 * width
                     tipo = "IsLinear"
-                    if collision then
-                        Collision = true
-                    end
                     tab.width = width
                 elseif skillshotType == SPELL_TYPE.CIRCULAR then
                     tab.radius = width
@@ -1935,7 +1932,9 @@ function _Prediction:GetPrediction(target, sp)
                 tab.range = range
                 tab.delay = delay
                 tab.type = tipo
-                CastPosition, WillHit, Collision = self.TRP:GetPrediction(TR_BindSS(tab), target, Vector(source))
+                local cptr, hctr, abc = self.TRP:GetPrediction(TR_BindSS(tab), target, Vector(source))
+                CastPosition = cptr
+                WillHit = collision and abc and -1 or hctr
                 Position = CastPosition
             else
                 if skillshotType == SPELL_TYPE.LINEAR then
