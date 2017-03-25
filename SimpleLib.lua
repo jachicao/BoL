@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.80
+_G.SimpleLibVersion = 1.90
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1934,7 +1934,11 @@ function _Prediction:GetPrediction(target, sp)
                 tab.type = tipo
                 local cptr, hctr, abc = self.TRP:GetPrediction(TR_BindSS(tab), target, Vector(source))
                 CastPosition = cptr
-                WillHit = collision and abc and -1 or hctr
+                if (collision and abc) then
+                    return
+                else
+                    WillHit = hctr
+                end
                 Position = CastPosition
             else
                 if skillshotType == SPELL_TYPE.LINEAR then
@@ -4123,6 +4127,3 @@ if _G.SimpleLibLoaded == nil then
     end
     _G.SimpleLibLoaded = true
 end
-
-
-
