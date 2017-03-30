@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.90
+_G.SimpleLibVersion = 1.91
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1932,11 +1932,17 @@ function _Prediction:GetPrediction(target, sp)
                 tab.range = range
                 tab.delay = delay
                 tab.type = tipo
-                local cptr, hctr, abc = self.TRP:GetPrediction(TR_BindSS(tab), target, Vector(source))
-                CastPosition = cptr
-                if (collision and abc) then
-                    return
+                local cptr, hctr, rcoll = self.TRP:GetPrediction(TR_BindSS(tab), target, source)
+                if collision then
+                    local rcoll, rcollc = self.TRP:IsCollision(TR_BindSS(tab), target, source, cptr)
+                    local coll = (source.charName == "Lux" or source.charName == "Veigar") and 1 or collision
+                    if type(coll) == "boolean" then
+                        coll = coll and 0 or math.huge
+                    end
+                    CastPosition = cptr
+                    WillHit = (rcoll and rcollc > coll) and -1 or hctr
                 else
+                    CastPosition = cptr
                     WillHit = hctr
                 end
                 Position = CastPosition
