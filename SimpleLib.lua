@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.91
+_G.SimpleLibVersion = 1.92
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1450,13 +1450,14 @@ function _Prediction:__init()
     self.PredictionList = {}
     self.Actives = {
         ["VPrediction"] = false,
+        ["TRPrediction"] = false,
         ["HPrediction"] = false,
         ["KPrediction"] = false,
         ["DivinePred"] = false,
         ["SPrediction"] = false,
         ["Prodiction"] = false,
         ["FHPrediction"] = false,
-        ["TRPrediction"] = false,
+        ["HPrediction"] = false,
     }
     if FileExist(LIB_PATH.."VPrediction.lua") then
         table.insert(self.PredictionList, "VPrediction")
@@ -1487,6 +1488,9 @@ function _Prediction:__init()
         table.insert(self.PredictionList, "Prodiction")
         self.Actives["Prodiction"] = true
     end ]]
+    if FileExist(LIB_PATH.."TRPrediction.lua") then
+        table.insert(self.PredictionList, "TRPrediction") 
+    end
     if FileExist(LIB_PATH.."KPrediction.lua") then
         table.insert(self.PredictionList, "KPrediction") 
     end
@@ -1502,9 +1506,6 @@ function _Prediction:__init()
     end
     if _G.FHPrediction or FileExist(LIB_PATH.."FHPrediction.lua") then
         table.insert(self.PredictionList, "FHPrediction")
-    end
-    if FileExist(LIB_PATH.."TRPrediction.lua") then
-        table.insert(self.PredictionList, "TRPrediction") 
     end
     self.LastRequest = 0
     local ImmobileBuffs = {
@@ -1676,7 +1677,7 @@ function _Prediction:AccuracyToHitChance(TypeOfPrediction, Accuracy)
     elseif TypeOfPrediction == "FHPrediction" then
         return 0.7 + Accuracy / 100
     elseif TypeOfPrediction == "TRPrediction" then
-        return (Accuracy/100) * 2.5
+        return (Accuracy/100)
     end
     if Accuracy >= 90 then
         return 3
@@ -1932,19 +1933,14 @@ function _Prediction:GetPrediction(target, sp)
                 tab.range = range
                 tab.delay = delay
                 tab.type = tipo
-                local cptr, hctr, rcoll = self.TRP:GetPrediction(TR_BindSS(tab), target, source)
                 if collision then
-                    local rcoll, rcollc = self.TRP:IsCollision(TR_BindSS(tab), target, source, cptr)
-                    local coll = (source.charName == "Lux" or source.charName == "Veigar") and 1 or collision
-                    if type(coll) == "boolean" then
-                        coll = coll and 0 or math.huge
-                    end
-                    CastPosition = cptr
-                    WillHit = (rcoll and rcollc > coll) and -1 or hctr
+                    tab.allowedCollisionCount = ((myHero.charName=="Lux" or myHero.charName=="Veigar") and 1 or 0)
                 else
-                    CastPosition = cptr
-                    WillHit = hctr
+                    tab.allowedCollisionCount = math.huge
                 end
+                local cptr, hctr = self.TRP:GetPrediction(TR_BindSS(tab), target, source)
+                CastPosition = cptr
+                WillHit = hctr
                 Position = CastPosition
             else
                 if skillshotType == SPELL_TYPE.LINEAR then
@@ -4083,7 +4079,7 @@ function getSpellType(unit, spellName)
 end
 
 if _G.SimpleLibLoaded == nil then
-    PrintMessage("Changelog: Added Turkish Prediction.")
+    PrintMessage("Changelog: Updated for latest TR Prediction changes by Izsha.")
     SpellManager = _SpellManager()
     Prediction = _Prediction()
     CircleManager = _CircleManager()
