@@ -1450,14 +1450,13 @@ function _Prediction:__init()
     self.PredictionList = {}
     self.Actives = {
         ["VPrediction"] = false,
-        ["TRPrediction"] = false,
         ["HPrediction"] = false,
         ["KPrediction"] = false,
         ["DivinePred"] = false,
         ["SPrediction"] = false,
         ["Prodiction"] = false,
         ["FHPrediction"] = false,
-        ["HPrediction"] = false,
+        ["TRPrediction"] = false,
     }
     if FileExist(LIB_PATH.."VPrediction.lua") then
         table.insert(self.PredictionList, "VPrediction")
@@ -1934,13 +1933,11 @@ function _Prediction:GetPrediction(target, sp)
                 tab.delay = delay
                 tab.type = tipo
                 if collision then
-                    tab.allowedCollisionCount = ((myHero.charName=="Lux" or myHero.charName=="Veigar") and 1 or 0)
+                    tab.allowedCollisionCount = ((source.charName == "Lux" or source.charName == "Veigar") and 1 or 0)
                 else
                     tab.allowedCollisionCount = math.huge
                 end
-                local cptr, hctr = self.TRP:GetPrediction(TR_BindSS(tab), target, source)
-                CastPosition = cptr
-                WillHit = hctr
+                CastPosition, WillHit = self.TRP:GetPrediction(TR_BindSS(tab), target, Vector(source))
                 Position = CastPosition
             else
                 if skillshotType == SPELL_TYPE.LINEAR then
