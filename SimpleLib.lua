@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.92
+_G.SimpleLibVersion = 1.93
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -690,8 +690,8 @@ function _SpellManager:InitMenu()
     if _G.SpellManagerMenu == nil then
         _G.SpellManagerMenu = scriptConfig("SimpleLib - Spell Manager", "SpellManager".."19052015"..tostring(myHero.charName))
         if VIP_USER then
-            _G.SpellManagerMenu:addParam("Packet", "Enable Packets", SCRIPT_PARAM_ONOFF, false)
-            _G.SpellManagerMenu:addParam("Exploit", "Enable No-Face Exploit", SCRIPT_PARAM_ONOFF, false)
+            --_G.SpellManagerMenu:addParam("Packet", "Enable Packets", SCRIPT_PARAM_ONOFF, false)
+            --_G.SpellManagerMenu:addParam("Exploit", "Enable No-Face Exploit", SCRIPT_PARAM_ONOFF, false)
         end
         _G.SpellManagerMenu:addParam("DisableDraws", "Disable All Draws", SCRIPT_PARAM_ONOFF, false)
         local tab = {" "}
@@ -1482,11 +1482,6 @@ function _Prediction:__init()
         }
         self.ProjectileSpeed = self.VP:GetProjectileSpeed(myHero)
     end
-    --[[if VIP_USER and FileExist(LIB_PATH.."Prodiction.lua") then 
-        require "Prodiction" 
-        table.insert(self.PredictionList, "Prodiction")
-        self.Actives["Prodiction"] = true
-    end ]]
     if FileExist(LIB_PATH.."TRPrediction.lua") then
         table.insert(self.PredictionList, "TRPrediction") 
     end
@@ -1495,16 +1490,6 @@ function _Prediction:__init()
     end
     if FileExist(LIB_PATH.."HPrediction.lua") then
         table.insert(self.PredictionList, "HPrediction") 
-    end
-    if VIP_USER and FileExist(LIB_PATH.."DivinePred.lua") and FileExist(LIB_PATH.."DivinePred.luac") then
-        table.insert(self.PredictionList, "DivinePred") 
-        self.BindedSpells = {}
-    end
-    if FileExist(LIB_PATH.."SPrediction.lua") and FileExist(LIB_PATH.."Collision.lua") then
-        table.insert(self.PredictionList, "SPrediction") 
-    end
-    if _G.FHPrediction or FileExist(LIB_PATH.."FHPrediction.lua") then
-        table.insert(self.PredictionList, "FHPrediction")
     end
     self.LastRequest = 0
     local ImmobileBuffs = {
@@ -1541,23 +1526,6 @@ end
 
 function _Prediction:LoadPrediction(TypeOfPrediction)
     if TypeOfPrediction == "VPrediction" then
-    elseif TypeOfPrediction == "Prodiction" then
-    elseif TypeOfPrediction == "DivinePred" then
-        if _G.DP then
-            self.DP = _G.DP
-            self.Actives["DivinePred"] = true
-            DelayAction(function()
-                PrintMessage("DivinePred is causing a lot of fps drops, take care!")
-            end, 0.8)
-        else
-            require "DivinePred"
-            _G.DP = DivinePred()
-            self.DP = _G.DP
-            self.Actives["DivinePred"] = true
-            DelayAction(function()
-                PrintMessage("DivinePred is causing a lot of fps drops, take care!")
-            end, 0.8)
-        end
     elseif TypeOfPrediction == "HPrediction" then
         if _G.HP then
             self.HP = _G.HP
@@ -1576,25 +1544,6 @@ function _Prediction:LoadPrediction(TypeOfPrediction)
             _G.KP = KPrediction()
             self.KP = _G.KP
             self.Actives["KPrediction"] = true
-        end
-    elseif TypeOfPrediction == "SPrediction" then
-        if _G.SP then
-            self.SP = _G.SP
-            self.Actives["SPrediction"] = true
-        else
-            require "SPrediction"
-            _G.SP = SPrediction()
-            self.SP = _G.SP
-            self.Actives["SPrediction"] = true
-        end
-    elseif TypeOfPrediction == "FHPrediction" then
-        if _G.FHPrediction then
-            self.FHP = _G.FHPrediction
-            self.Actives["FHPrediction"] = true
-        else
-            require "FHPrediction"
-            self.FHP = _G.FHPrediction
-            self.Actives["FHPrediction"] = true
         end
     elseif TypeOfPrediction == "TRPrediction" then
         if _G.TRP then
@@ -1663,18 +1612,6 @@ function _Prediction:AccuracyToHitChance(TypeOfPrediction, Accuracy)
         return (Accuracy/100) * 3
     elseif TypeOfPrediction == "KPrediction" then
         return (Accuracy/100)
-    elseif TypeOfPrediction == "SPrediction" then
-        if Accuracy >= 65 then
-            return 3
-        elseif Accuracy >= 45 then
-            return 2
-        elseif Accuracy >= 25 then
-            return 1
-        else
-            return 0
-        end
-    elseif TypeOfPrediction == "FHPrediction" then
-        return 0.7 + Accuracy / 100
     elseif TypeOfPrediction == "TRPrediction" then
         return (Accuracy/100)
     end
@@ -1764,32 +1701,6 @@ function _Prediction:GetPrediction(target, sp)
                     local WillHit = collision and info.mCollision() and -1 or info.hitchance
                     CastPosition = CastPosition1
                     Position = CastPosition1
-                end
-            elseif TypeOfPrediction == "DivinePred" then
-                local col = collision and 0 or math.huge
-                if self.BindedSpells[name] == nil then
-                    self:BindSpell(sp)
-                else
-                    self.BindedSpells[name].range = range
-                    self.BindedSpells[name].speed = speed
-                    self.BindedSpells[name].radius = width
-                    self.BindedSpells[name].delay = delay * 1000
-                    self.BindedSpells[name].allowedCollisionCount = col
-                    if skillshotType == SPELL_TYPE.LINEAR then
-                        self.BindedSpells[name].type = SkillShot.TYPE.LINE
-                    elseif skillshotType == SPELL_TYPE.CIRCULAR then
-                        self.BindedSpells[name].type = SkillShot.TYPE.CIRCLE
-                    elseif skillshotType == SPELL_TYPE.CONE then
-                        self.BindedSpells[name].type = SkillShot.TYPE.CONE
-                    end
-                end
-                local state, pos, perc = self.DP:predict(name, target, Vector(source))
-                if state and pos and perc then
-                    --local hitchance = self:AccuracyToHitChance(TypeOfPrediction, accuracy)
-                    --local state, pos, perc = self.DP:predict(DPTarget(target), spell, hitchance, source)
-                    WillHit = ((state == SkillShot.STATUS.SUCCESS_HIT) or self:IsImmobile(target, sp)) 
-                    CastPosition = pos
-                    Position = pos
                 end
             elseif TypeOfPrediction == "HPrediction" then
                 local tipo = "PromptCircle"
@@ -2010,41 +1921,8 @@ function _OrbwalkManager:__init()
         if _G.Reborn_Loaded or _G.Reborn_Initialised or _G.AutoCarry ~= nil then
             table.insert(self.OrbwalkList, "AutoCarry")
         end
-        if _G.MMA_IsLoaded then
-            table.insert(self.OrbwalkList, "MMA")
-        end
         if _G._Pewalk and VIP_USER then
             table.insert(self.OrbwalkList, "Pewalk")
-        end
-        if _G.NebelwolfisOrbWalkerInit or _G.NebelwolfisOrbWalkerLoaded then
-            table.insert(self.OrbwalkList, "NOW")
-        end
-        if _G.S1 or _G.S1mpleOrbLoaded or _G.S1OrbLoading then
-            table.insert(self.OrbwalkList, "S1mpleOrbWalker")
-        end
-        if _G.SOWi then
-            table.insert(self.OrbwalkList, "SOW")
-        end
-        if _G["BigFatOrb_Loaded"] then
-            table.insert(self.OrbwalkList, "Big Fat Walk")
-        end
-        if _G.SxOrb then
-            table.insert(self.OrbwalkList, "SxOrbWalk")
-        end
-        if FileExist(LIB_PATH.."Nebelwolfi's Orb Walker.lua") and not (_G.NebelwolfisOrbWalkerInit or _G.NebelwolfisOrbWalkerLoaded) then
-            table.insert(self.OrbwalkList, "NOW")
-        end
-        if FileExist(LIB_PATH.."S1mpleOrbWalker.lua") and not (_G.S1 or _G.S1mpleOrbLoaded or _G.S1OrbLoading) then
-            table.insert(self.OrbwalkList, "S1mpleOrbWalker")
-        end
-        if FileExist(LIB_PATH .. "Big Fat Orbwalker.lua") and not _G["BigFatOrb_Loaded"] then
-            table.insert(self.OrbwalkList, "Big Fat Walk")
-        end
-        if FileExist(LIB_PATH .. "SxOrbWalk.lua") and not _G.SxOrb then
-            table.insert(self.OrbwalkList, "SxOrbWalk")
-        end
-        if FileExist(LIB_PATH .. "SOW.lua") and not _G.SOWi then
-            table.insert(self.OrbwalkList, "SOW")
         end
         if _G.OrbwalkManagerMenu == nil then
             _G.OrbwalkManagerMenu = scriptConfig("SimpleLib - Orbwalk Manager", "OrbwalkManager".."24052015"..tostring(myHero.charName))
@@ -2331,18 +2209,8 @@ end
 function _OrbwalkManager:CanAttack(ExtraTime)
     if self.OrbLoaded == "AutoCarry" then
         return _G.AutoCarry.Orbwalker:CanShoot()
-    elseif self.OrbLoaded == "SxOrbWalk" then
-        return _G.SxOrb:CanAttack()
-    elseif self.OrbLoaded == "SOW" then
-    elseif self.OrbLoaded == "Big Fat Walk" then
-    elseif self.OrbLoaded == "MMA" then
-        return _G.MMA_CanAttack()
-    elseif self.OrbLoaded == "NOW" then
-        return _G.NOWi:TimeToAttack()
     elseif self.OrbLoaded == "Pewalk" then
         return _G._Pewalk.CanAttack()
-    elseif self.OrbLoaded == "S1mpleOrbWalker" then
-        return _G.S1:canAA()
     end
     return self:_CanAttack(ExtraTime)
 end
@@ -2355,18 +2223,8 @@ end
 function _OrbwalkManager:CanMove(ExtraTime)
     if self.OrbLoaded == "AutoCarry" then
         return _G.AutoCarry.Orbwalker:CanMove()
-    elseif self.OrbLoaded == "SxOrbWalk" then
-        return _G.SxOrb:CanMove()
-    elseif self.OrbLoaded == "SOW" then
-    elseif self.OrbLoaded == "Big Fat Walk" then
-    elseif self.OrbLoaded == "MMA" then
-        return _G.MMA_CanMove()
-    elseif self.OrbLoaded == "NOW" then
-        return _G.NOWi:TimeToMove()
     elseif self.OrbLoaded == "Pewalk" then
         return _G._Pewalk.CanMove()
-    elseif self.OrbLoaded == "S1mpleOrbWalker" then
-        return _G.S1:canMove()
     end
     return self:_CanMove(ExtraTime)
 end
@@ -2553,11 +2411,6 @@ function _OrbwalkManager:OrbLoad()
                 self.OrbLoaded = self:GetOrbwalkSelected()
                 self:EnableMovement()
                 self:EnableAttacks()
-                if _G.SxOrb ~= nil then
-                    _G.SxOrb:DisableMove()
-                    _G.SxOrb:DisableAttacks()
-                    PrintMessage("Disabling Movement and Attacks from SxOrbWalk because you decided to use "..self:GetOrbwalkSelected()..".")
-                end
                 return
             else
                 _G.AutoCarry.MyHero:MovementEnabled(false)
@@ -2571,59 +2424,9 @@ function _OrbwalkManager:OrbLoad()
         end
         if self.Loaded == nil then
             self.Loaded = true
-            if self:GetOrbwalkSelected() == "MMA" then
-                self.OrbLoaded = self:GetOrbwalkSelected()
-                self:EnableMovement()
-                self:EnableAttacks()
-            elseif self:GetOrbwalkSelected() == "SxOrbWalk" then
-                if not _G.SxOrb then
-                    require 'SxOrbWalk'
-                    _G.SxOrb:LoadToMenu()
-                end
-                self.OrbLoaded = self:GetOrbwalkSelected()
-                self:EnableMovement()
-                self:EnableAttacks()
-            elseif self:GetOrbwalkSelected() == "SOW" then
-                if not _G.SOWi then
-                    require 'SOW'
-                end
-                self.OrbLoaded = self:GetOrbwalkSelected()
-                if _G.VP then
-                    _G.SOWi = SOW(_G.VP)
-                    _G.SOWi:LoadToMenu()
-                end
-                self:EnableMovement()
-                self:EnableAttacks()
-            elseif self:GetOrbwalkSelected() == "Big Fat Walk" then
-                if not _G["BigFatOrb_Loaded"] then
-                    require "Big Fat Orbwalker"
-                end
-                self.OrbLoaded = self:GetOrbwalkSelected()
-                self:EnableMovement()
-                self:EnableAttacks()
-            elseif self:GetOrbwalkSelected() == "NOW" then
-                if not (_G.NebelwolfisOrbWalkerInit or _G.NebelwolfisOrbWalkerLoaded) then
-                    require "Nebelwolfi's Orb Walker"
-                    NebelwolfisOrbWalkerClass()
-                    _G.NOWi = _G.NebelwolfisOrbWalker
-                else
-                    _G.NOWi = _G.NebelwolfisOrbWalker
-                end
-                self.OrbLoaded = self:GetOrbwalkSelected()
-                self:EnableMovement()
-                self:EnableAttacks()
-            elseif self:GetOrbwalkSelected() == "Pewalk" then
+            if self:GetOrbwalkSelected() == "Pewalk" then
                 if not _G._Pewalk then
                     require "Pewalk"
-                end
-                self.OrbLoaded = self:GetOrbwalkSelected()
-                self:EnableMovement()
-                self:EnableAttacks()
-            elseif self:GetOrbwalkSelected() == "S1mpleOrbWalker" then
-                if not (_G.S1 or _G.S1mpleOrbLoaded or _G.S1OrbLoading) then
-                    require "S1mpleOrbWalker"
-                    _G.S1 = S1mpleOrbWalker()
-                    _G.S1:AddToMenu(scriptConfig("S1mpleOrbWalker", "S1mpleOrbWalker".."24052015"..tostring(myHero.charName)))
                 end
                 self.OrbLoaded = self:GetOrbwalkSelected()
                 self:EnableMovement()
@@ -2665,16 +2468,6 @@ function _OrbwalkManager:ResetAA()
     self.GotReset = true
     if self.OrbLoaded == "AutoCarry" then
         _G.AutoCarry.Orbwalker:ResetAttackTimer()
-    elseif self.OrbLoaded == "SxOrbWalk" then
-        _G.SxOrb:ResetAA()
-    elseif self.OrbLoaded == "SOW" then
-        _G.SOWi:resetAA()
-    elseif self.OrbLoaded == "NOW" then
-        _G.NOWi.orbTable.lastAA = os.clock() - GetLatency() / 2000 - _G.NOWi.orbTable.animation
-    elseif self.OrbLoaded == "MMA" then
-        _G.MMA_ResetAutoAttack()
-    elseif self.OrbLoaded == "S1mpleOrbWalker" then
-        return _G.S1:ResetAA()
     end
 end
 
@@ -2683,26 +2476,8 @@ function _OrbwalkManager:DisableMovement()
         if self.OrbLoaded == "AutoCarry" then
             _G.AutoCarry.MyHero:MovementEnabled(false)
             self.Move = false
-        elseif self.OrbLoaded == "SxOrbWalk" then
-            _G.SxOrb:DisableMove()
-            self.Move = false
-        elseif self.OrbLoaded == "SOW" then
-            _G.SOWi.Move = false
-            self.Move = false
-        elseif self.OrbLoaded == "Big Fat Walk" then
-            _G["BigFatOrb_DisableMove"] = true
-            self.Move = false
-        elseif self.OrbLoaded == "MMA" then
-            _G.MMA_AvoidMovement(true)
-            self.Move = false
-        elseif self.OrbLoaded == "NOW" then
-            _G.NOWi:SetMove(false)
-            self.Move = false
         elseif self.OrbLoaded == "Pewalk" then
             _G._Pewalk.AllowMove(false)
-            self.Move = false
-        elseif self.OrbLoaded == "S1mpleOrbWalker" then
-            _G.S1.allowedtoMove = false
             self.Move = false
         end
     end
@@ -2713,26 +2488,8 @@ function _OrbwalkManager:EnableMovement()
         if self.OrbLoaded == "AutoCarry" then
             _G.AutoCarry.MyHero:MovementEnabled(true)
             self.Move = true
-        elseif self.OrbLoaded == "SxOrbWalk" then
-            _G.SxOrb:EnableMove()
-            self.Move = true
-        elseif self.OrbLoaded == "SOW" then
-            _G.SOWi.Move = true
-            self.Move = true
-        elseif self.OrbLoaded == "Big Fat Walk" then
-            _G["BigFatOrb_DisableMove"] = false
-            self.Move = true
-        elseif self.OrbLoaded == "MMA" then
-            _G.MMA_AvoidMovement(false)
-            self.Move = true
-        elseif self.OrbLoaded == "NOW" then
-            _G.NOWi:SetMove(true)
-            self.Move = true
         elseif self.OrbLoaded == "Pewalk" then
             _G._Pewalk.AllowMove(true)
-            self.Move = true
-        elseif self.OrbLoaded == "S1mpleOrbWalker" then
-            _G.S1.allowedtoMove = true
             self.Move = true
         end
     end
@@ -2743,26 +2500,8 @@ function _OrbwalkManager:DisableAttacks()
         if self.OrbLoaded == "AutoCarry" then
             _G.AutoCarry.MyHero:AttacksEnabled(false)
             self.Attack = false
-        elseif self.OrbLoaded == "SxOrbWalk" then
-            _G.SxOrb:DisableAttacks()
-            self.Attack = false
-        elseif self.OrbLoaded == "SOW" then
-            _G.SOWi.Attacks = false
-            self.Attack = false
-        elseif self.OrbLoaded == "Big Fat Walk" then
-            _G["BigFatOrb_DisableAttacks"] = true
-            self.Attack = false
-        elseif self.OrbLoaded == "MMA" then
-            _G.MMA_StopAttacks(true)
-            self.Attack = false
-        elseif self.OrbLoaded == "NOW" then
-            _G.NOWi:SetAA(false)
-            self.Attack = false
         elseif self.OrbLoaded == "Pewalk" then
             _G._Pewalk.AllowAttack(false)
-            self.Attack = false
-        elseif self.OrbLoaded == "S1mpleOrbWalker" then
-            _G.S1.allowedtoAA = false
             self.Attack = false
         end
     end
@@ -2773,26 +2512,8 @@ function _OrbwalkManager:EnableAttacks()
         if self.OrbLoaded == "AutoCarry" then
             _G.AutoCarry.MyHero:AttacksEnabled(true)
             self.Attack = true
-        elseif self.OrbLoaded == "SxOrbWalk" then
-            _G.SxOrb:EnableAttacks()
-            self.Attack = true
-        elseif self.OrbLoaded == "SOW" then
-            _G.SOWi.Attacks = true
-            self.Attack = true
-        elseif self.OrbLoaded == "Big Fat Walk" then
-            _G["BigFatOrb_DisableAttacks"] = false
-            self.Attack = true
-        elseif self.OrbLoaded == "MMA" then
-            _G.MMA_StopAttacks(false)
-            self.Attack = true
-        elseif self.OrbLoaded == "NOW" then
-            _G.NOWi:SetAA(true)
-            self.Attack = true
         elseif self.OrbLoaded == "Pewalk" then
             _G._Pewalk.AllowAttack(true)
-            self.Attack = true
-        elseif self.OrbLoaded == "S1mpleOrbWalker" then
-            _G.S1.allowedtoAA = true
             self.Attack = true
         end
     end
