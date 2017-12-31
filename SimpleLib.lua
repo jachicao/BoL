@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.93
+_G.SimpleLibVersion = 1.94
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1452,10 +1452,6 @@ function _Prediction:__init()
         ["VPrediction"] = false,
         ["HPrediction"] = false,
         ["KPrediction"] = false,
-        ["DivinePred"] = false,
-        ["SPrediction"] = false,
-        ["Prodiction"] = false,
-        ["FHPrediction"] = false,
         ["TRPrediction"] = false,
     }
     if FileExist(LIB_PATH.."VPrediction.lua") then
@@ -1613,7 +1609,6 @@ function _Prediction:AccuracyToHitChance(TypeOfPrediction, Accuracy)
     elseif TypeOfPrediction == "KPrediction" then
         return (Accuracy/100)
     elseif TypeOfPrediction == "TRPrediction" then
-        return (Accuracy/100)
     end
     if Accuracy >= 90 then
         return 3
@@ -1674,35 +1669,7 @@ function _Prediction:GetPrediction(target, sp)
         TypeOfPrediction = target.type ~= myHero.type and "VPrediction" or TypeOfPrediction
         TypeOfPrediction = self.Actives[tostring(TypeOfPrediction)] == true and TypeOfPrediction or "VPrediction"
         if self.Actives[TypeOfPrediction] then
-            if TypeOfPrediction == "Prodiction" then
-                local aoe = false
-                if aoe then
-                    if skillshotType == SPELL_TYPE.LINEAR then
-                        local CastPosition1, info, objects = Prodiction.GetLineAOEPrediction(target, range, speed, delay, width, source)
-                        local WillHit = collision and info.mCollision() and -1 or info.hitchance
-                        NumberOfHits = #objects
-                        CastPosition = CastPosition1
-                        Position = CastPosition1
-                    elseif skillshotType == SPELL_TYPE.CIRCULAR then
-                        local CastPosition1, info, objects = Prodiction.GetCircularAOEPrediction(target, range, speed, delay, width, source)
-                        local WillHit = collision and info.mCollision() and -1 or info.hitchance
-                        NumberOfHits = #objects
-                        CastPosition = CastPosition1
-                        Position = CastPosition1
-                     elseif skillshotType == SPELL_TYPE.CONE then
-                        local CastPosition1, info, objects = Prodiction.GetConeAOEPrediction(target, range, speed, delay, width, source)
-                        local WillHit = collision and info.mCollision() and -1 or info.hitchance
-                        NumberOfHits = #objects
-                        CastPosition = CastPosition1
-                        Position = CastPosition1
-                    end
-                else
-                    local CastPosition1, info = Prodiction.GetPrediction(target, range, speed, delay, width, source)
-                    local WillHit = collision and info.mCollision() and -1 or info.hitchance
-                    CastPosition = CastPosition1
-                    Position = CastPosition1
-                end
-            elseif TypeOfPrediction == "HPrediction" then
+            if TypeOfPrediction == "HPrediction" then
                 local tipo = "PromptCircle"
                 local tab = {}
                 range = GetDistance(source, myHero) + range
@@ -1792,42 +1759,10 @@ function _Prediction:GetPrediction(target, sp)
                 tab.type = tipo
                 CastPosition, WillHit = self.KP:GetPrediction(KPSkillshot(tab), target, Vector(source))
                 Position = CastPosition
-            elseif TypeOfPrediction == "SPrediction" then
-                CastPosition, WillHit, Position = self.SP:Predict(target, range, speed, delay, width, collision, source)
-            elseif TypeOfPrediction == "FHPrediction" then
-                local tipo = SkillShotType.SkillshotCircle
-                local tab = {}
-                tab.aoe = aoe
-                if skillshotType == SPELL_TYPE.LINEAR then
-                    tab.radius = width --/ 2
-                    if speed ~= math.huge then 
-                        tipo = SkillShotType.SkillshotMissileLine
-                    else
-                        tipo = SkillShotType.SkillshotLine
-                    end
-                    if collision then
-                        tab.collision = {
-                            [CollisionObjectTypes.Champion] = true, 
-                            [CollisionObjectTypes.Minion] = true, 
-                            [CollisionObjectTypes.YasuoWall] = true 
-                        }
-                    end
-                elseif skillshotType == SPELL_TYPE.CIRCULAR then
-                    tab.radius = width
-                    tipo = SkillShotType.SkillshotCircle
-                elseif skillshotType == SPELL_TYPE.CONE then
-                    tab.angle = width
-                    tipo = SkillShotType.SkillshotCone
-                end
-                tab.range = range
-                tab.delay = delay
-                tab.speed = speed
-                tab.type = tipo
-                CastPosition, WillHit = self.FHP.GetPrediction(tab, target, Vector(source))
-                Position = CastPosition
             elseif TypeOfPrediction == "TRPrediction" then
                 local tipo = "IsRadial"
                 local tab = {}
+                tab.aoe = aoe
                 if skillshotType == SPELL_TYPE.LINEAR then
                     width = 2 * width
                     tipo = "IsLinear"
@@ -1848,7 +1783,12 @@ function _Prediction:GetPrediction(target, sp)
                 else
                     tab.allowedCollisionCount = math.huge
                 end
-                CastPosition, WillHit = self.TRP:GetPrediction(TR_BindSS(tab), target, Vector(source))
+                if aoe then
+                    CastPosition, WillHit = self.TRP:GetAOEPrediction(TR_BindSS(tab), target, Vector(source))
+                else
+                    CastPosition, WillHit = self.TRP:GetPrediction(TR_BindSS(tab), target, Vector(source))
+                end
+                
                 Position = CastPosition
             else
                 if skillshotType == SPELL_TYPE.LINEAR then
