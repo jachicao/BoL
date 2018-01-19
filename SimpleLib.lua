@@ -1,6 +1,6 @@
 local AUTOUPDATES = true
 local ScriptName = "SimpleLib"
-_G.SimpleLibVersion = 1.94
+_G.SimpleLibVersion = 1.95
 
 SPELL_TYPE = { LINEAR = 1, CIRCULAR = 2, CONE = 3, TARGETTED = 4, SELF = 5}
 
@@ -1452,7 +1452,7 @@ function _Prediction:__init()
         ["VPrediction"] = false,
         ["HPrediction"] = false,
         ["KPrediction"] = false,
-        ["TRPrediction"] = false,
+        --["TRPrediction"] = false,
     }
     if FileExist(LIB_PATH.."VPrediction.lua") then
         table.insert(self.PredictionList, "VPrediction")
@@ -1478,9 +1478,9 @@ function _Prediction:__init()
         }
         self.ProjectileSpeed = self.VP:GetProjectileSpeed(myHero)
     end
-    if FileExist(LIB_PATH.."TRPrediction.lua") then
+    --[[if FileExist(LIB_PATH.."TRPrediction.lua") then
         table.insert(self.PredictionList, "TRPrediction") 
-    end
+    end]]
     if FileExist(LIB_PATH.."KPrediction.lua") then
         table.insert(self.PredictionList, "KPrediction") 
     end
@@ -1541,7 +1541,7 @@ function _Prediction:LoadPrediction(TypeOfPrediction)
             self.KP = _G.KP
             self.Actives["KPrediction"] = true
         end
-    elseif TypeOfPrediction == "TRPrediction" then
+    --[[elseif TypeOfPrediction == "TRPrediction" then
         if _G.TRP then
             self.TRP = _G.TRP
             self.Actives["TRPrediction"] = true
@@ -1550,7 +1550,7 @@ function _Prediction:LoadPrediction(TypeOfPrediction)
             _G.TRP = TRPrediction()
             self.TRP = _G.TRP
             self.Actives["TRPrediction"] = true
-        end
+        end]]
     end
 end
 
@@ -1608,7 +1608,7 @@ function _Prediction:AccuracyToHitChance(TypeOfPrediction, Accuracy)
         return (Accuracy/100) * 3
     elseif TypeOfPrediction == "KPrediction" then
         return (Accuracy/100)
-    elseif TypeOfPrediction == "TRPrediction" then
+    --elseif TypeOfPrediction == "TRPrediction" then
     end
     if Accuracy >= 90 then
         return 3
@@ -1759,7 +1759,7 @@ function _Prediction:GetPrediction(target, sp)
                 tab.type = tipo
                 CastPosition, WillHit = self.KP:GetPrediction(KPSkillshot(tab), target, Vector(source))
                 Position = CastPosition
-            elseif TypeOfPrediction == "TRPrediction" then
+            --[[elseif TypeOfPrediction == "TRPrediction" then
                 local tipo = "IsRadial"
                 local tab = {}
                 tab.aoe = aoe
@@ -1789,7 +1789,7 @@ function _Prediction:GetPrediction(target, sp)
                     CastPosition, WillHit = self.TRP:GetPrediction(TR_BindSS(tab), target, Vector(source))
                 end
                 
-                Position = CastPosition
+                Position = CastPosition]]
             else
                 if skillshotType == SPELL_TYPE.LINEAR then
                     if aoe then
@@ -3737,7 +3737,6 @@ function getSpellType(unit, spellName)
 end
 
 if _G.SimpleLibLoaded == nil then
-    PrintMessage("Changelog: Updated for latest TR Prediction changes by Izsha.")
     SpellManager = _SpellManager()
     Prediction = _Prediction()
     CircleManager = _CircleManager()
