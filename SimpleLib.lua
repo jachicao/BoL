@@ -1864,8 +1864,20 @@ function _OrbwalkManager:__init()
         if _G._Pewalk and VIP_USER then
             table.insert(self.OrbwalkList, "Pewalk")
         end
+        if _G["BigFatOrb_Loaded"] then
+            table.insert(self.OrbwalkList, "Big Fat Walk")
+        end
+        if _G.SxOrb then
+            table.insert(self.OrbwalkList, "SxOrbWalk")
+        end
         if _G.OrbwalkManagerMenu == nil then
             _G.OrbwalkManagerMenu = scriptConfig("SimpleLib - Orbwalk Manager", "OrbwalkManager".."24052015"..tostring(myHero.charName))
+        end
+        if FileExist(LIB_PATH .. "Big Fat Orbwalker.lua") and not _G["BigFatOrb_Loaded"] then
+            table.insert(self.OrbwalkList, "Big Fat Walk")
+        end
+        if FileExist(LIB_PATH .. "SxOrbWalk.lua") and not _G.SxOrb then
+            table.insert(self.OrbwalkList, "SxOrbWalk")
         end
         if #self.OrbwalkList > 0 then
             _G.OrbwalkManagerMenu:addParam("OrbwalkerSelected", "Orbwalker Selection", SCRIPT_PARAM_LIST, 1, self.OrbwalkList)
@@ -2151,6 +2163,9 @@ function _OrbwalkManager:CanAttack(ExtraTime)
         return _G.AutoCarry.Orbwalker:CanShoot()
     elseif self.OrbLoaded == "Pewalk" then
         return _G._Pewalk.CanAttack()
+    elseif self.OrbLoaded == "SxOrbWalk" then
+        return _G.SxOrb:CanAttack()
+    elseif self.OrbLoaded == "Big Fat Walk" then
     end
     return self:_CanAttack(ExtraTime)
 end
@@ -2163,8 +2178,11 @@ end
 function _OrbwalkManager:CanMove(ExtraTime)
     if self.OrbLoaded == "AutoCarry" then
         return _G.AutoCarry.Orbwalker:CanMove()
+    elseif self.OrbLoaded == "SxOrbWalk" then
+        return _G.SxOrb:CanMove()
     elseif self.OrbLoaded == "Pewalk" then
         return _G._Pewalk.CanMove()
+    elseif self.OrbLoaded == "Big Fat Walk" then
     end
     return self:_CanMove(ExtraTime)
 end
@@ -2371,6 +2389,21 @@ function _OrbwalkManager:OrbLoad()
                 self.OrbLoaded = self:GetOrbwalkSelected()
                 self:EnableMovement()
                 self:EnableAttacks()
+            elseif self:GetOrbwalkSelected() == "SxOrbWalk" then
+                if not _G.SxOrb then
+                    require 'SxOrbWalk'
+                    _G.SxOrb:LoadToMenu()
+                end
+                self.OrbLoaded = self:GetOrbwalkSelected()
+                self:EnableMovement()
+                self:EnableAttacks()
+            elseif self:GetOrbwalkSelected() == "Big Fat Walk" then
+                if not _G["BigFatOrb_Loaded"] then
+                    require "Big Fat Orbwalker"
+                end
+                self.OrbLoaded = self:GetOrbwalkSelected()
+                self:EnableMovement()
+                self:EnableAttacks()
             end
         end
     else
@@ -2408,7 +2441,10 @@ function _OrbwalkManager:ResetAA()
     self.GotReset = true
     if self.OrbLoaded == "AutoCarry" then
         _G.AutoCarry.Orbwalker:ResetAttackTimer()
+    elseif self.OrbLoaded == "SxOrbWalk" then
+        _G.SxOrb:ResetAA()
     end
+
 end
 
 function _OrbwalkManager:DisableMovement()
@@ -2418,6 +2454,12 @@ function _OrbwalkManager:DisableMovement()
             self.Move = false
         elseif self.OrbLoaded == "Pewalk" then
             _G._Pewalk.AllowMove(false)
+            self.Move = false
+        elseif self.OrbLoaded == "Big Fat Walk" then
+            _G["BigFatOrb_DisableMove"] = true
+            self.Move = false
+        elseif self.OrbLoaded == "SxOrbWalk" then
+            _G.SxOrb:DisableMove()
             self.Move = false
         end
     end
@@ -2431,6 +2473,12 @@ function _OrbwalkManager:EnableMovement()
         elseif self.OrbLoaded == "Pewalk" then
             _G._Pewalk.AllowMove(true)
             self.Move = true
+        elseif self.OrbLoaded == "Big Fat Walk" then
+            _G["BigFatOrb_DisableMove"] = false
+            self.Move = true
+        elseif self.OrbLoaded == "SxOrbWalk" then
+            _G.SxOrb:EnableMove()
+            self.Move = true
         end
     end
 end
@@ -2443,6 +2491,12 @@ function _OrbwalkManager:DisableAttacks()
         elseif self.OrbLoaded == "Pewalk" then
             _G._Pewalk.AllowAttack(false)
             self.Attack = false
+        elseif self.OrbLoaded == "SxOrbWalk" then
+            _G.SxOrb:DisableAttacks()
+            self.Attack = false
+        elseif self.OrbLoaded == "Big Fat Walk" then
+            _G["BigFatOrb_DisableAttacks"] = true
+            self.Attack = false
         end
     end
 end
@@ -2454,6 +2508,12 @@ function _OrbwalkManager:EnableAttacks()
             self.Attack = true
         elseif self.OrbLoaded == "Pewalk" then
             _G._Pewalk.AllowAttack(true)
+            self.Attack = true
+        elseif self.OrbLoaded == "Big Fat Walk" then
+            _G["BigFatOrb_DisableAttacks"] = false
+            self.Attack = true
+        elseif self.OrbLoaded == "SxOrbWalk" then
+            _G.SxOrb:EnableAttacks()
             self.Attack = true
         end
     end
